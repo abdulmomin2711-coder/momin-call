@@ -1,151 +1,158 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Momin Voice Call - Low Data</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Momin Voice Call</title>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <style>
-        body { background: #000; color: #fff; text-align: center; padding: 15px; font-family: Arial, sans-serif; }
-        #id-section { background: #111; padding: 10px; border-radius: 8px; border: 1px dashed #444; margin-bottom: 15px; }
-        #my-id-display { color: #0f0; font-weight: bold; font-size: 16px; margin-bottom: 10px; }
-        #copy-box { width: 90%; background: #222; color: #0f0; border: 1px solid #444; padding: 12px; text-align: center; display: none; margin: 10px auto; border-radius: 5px; }
-        input { width: 90%; padding: 12px; margin-top: 10px; border-radius: 5px; border: 1px solid #444; background: #222; color: #fff; }
-        button { width: 95%; padding: 12px; margin-top: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; border: none; }
-        #callBtn { background: #0f0; color: #000; }
-        #saveBtn { background: #008cba; color: #fff; }
-        .label { font-size: 11px; color: #aaa; text-transform: uppercase; }
-        #contact-list { max-height: 250px; overflow-y: auto; margin-top: 10px; text-align: left; background: #111; padding: 10px; border-radius: 8px; }
-        .contact-item { padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
-        .name-tag { color: #0f0; font-weight: bold; cursor: pointer; }
-        .delete-btn { color: #ff4444; font-size: 12px; background: none; border: 1px solid #ff4444; padding: 2px 8px; }
-        #status { font-size: 12px; color: #ffcc00; margin-top: 10px; font-weight: bold; }
+        body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #ffffff; text-align: center; padding: 10px; margin: 0; }
+        .main-container { max-width: 450px; margin: auto; }
+        h2 { margin: 15px 0; font-size: 24px; }
+        .box { background: #151515; border: 1px dashed #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .id-text { color: #00FF00; font-size: 26px; font-weight: bold; margin: 5px 0; letter-spacing: 2px; }
+        input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; text-align: center; font-size: 16px; outline: none; }
+        input:focus { border-color: #00FF00; }
+        .btn { width: 95%; padding: 14px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 5px; }
+        #save-btn { background: #008CBA; color: white; }
+        #start-btn { background: #00FF00; color: #000; height: 55px; }
+        #end-btn { background: #FF3B30; color: #fff; display: none; height: 55px; }
+        .contact-list { background: #111; border-radius: 10px; padding: 10px; margin-top: 10px; text-align: left; }
+        .contact-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #222; cursor: pointer; }
+        .contact-name { color: #00FF00; font-weight: bold; font-size: 16px; }
+        .delete-btn { color: #ff3b30; font-weight: bold; padding: 5px 10px; border: 1px solid #ff3b30; border-radius: 5px; }
+        #status-msg { margin: 10px 0; font-size: 16px; font-weight: bold; color: #00FF00; display: none; }
     </style>
 </head>
 <body>
-    <h3>Momin Voice Call</h3>
-    
-    <div id="id-section">
-        <div class="label">Your Permanent ID:</div>
-        <div id="my-id-display">Loading...</div>
-        <button style="width:auto; background:#444; color:#fff; font-size:12px;" onclick="mominPrepareCopy()">Ready to Copy</button>
-        <input type="text" id="copy-box" readonly onclick="this.select();">
+
+<div class="main-container">
+    <h2>Momin Voice Call</h2>
+    <p style="color: #666; font-size: 12px; margin-bottom: 20px;">Network Optimized for 2G/3G/4G</p>
+
+    <div class="box">
+        <p style="margin: 0; color: #aaa; font-size: 12px;">YOUR PERMANENT ID</p>
+        <div id="my-id" class="id-text">Loading...</div>
+        <button onclick="copyID()" style="background: #333; color: #00FF00; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-size: 12px;">Copy ID</button>
     </div>
 
-    <div id="status">Network Optimized for 2G/3G</div>
+    <div id="status-msg">Call Ongoing...</div>
 
-    <div style="background: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 15px;">
-        <div class="label">Add New Contact:</div>
-        <input type="text" id="newName" placeholder="Name">
-        <input type="text" id="newId" placeholder="ID">
-        <button id="saveBtn" onclick="mominAddContact()">Save Contact</button>
+    <div class="box" id="add-contact-box">
+        <p style="margin: 0 0 10px 0; color: #aaa; font-size: 13px;">ADD NEW CONTACT</p>
+        <input type="text" id="contact-name" placeholder="Name">
+        <input type="number" id="contact-id" placeholder="4 Digit ID">
+        <button id="save-btn" class="btn" onclick="saveContact()">Save Contact</button>
     </div>
-    
-    <div class="label">Ready to Call:</div>
-    <input type="text" id="peerId" placeholder="Enter or Select ID">
-    <button id="callBtn" onclick="mominStartVoiceCall()">Start Voice Call</button>
 
-    <div class="label" style="margin-top:20px;">Saved Contacts:</div>
-    <div id="contact-list"></div>
+    <div class="box" id="call-box">
+        <p style="margin: 0 0 10px 0; color: #aaa; font-size: 13px;">READY TO CALL</p>
+        <input type="number" id="remote-id" placeholder="Enter Friend's ID">
+        <button id="start-btn" class="btn" onclick="makeCall()">Start Voice Call</button>
+        <button id="end-btn" class="btn" onclick="endCall()">End Call</button>
+    </div>
 
-    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
-    
-    <script>
-        // ১. ডাটা প্রিজারভেশন
-        let mySavedId = localStorage.getItem('mominCallMyId') || 'momin-' + Math.floor(Math.random() * 1000000);
-        localStorage.setItem('mominCallMyId', mySavedId);
-        
-        const peer = new Peer(mySavedId);
-        peer.on('open', (id) => { document.getElementById('my-id-display').innerText = id; });
+    <p style="color: #666; font-size: 13px; font-weight: bold;">SAVED CONTACTS</p>
+    <div id="contact-display" class="contact-list">
+        <p style="color: #444; text-align: center;">No Contacts Saved</p>
+    </div>
+</div>
 
-        // ২. লো-ব্যান্ডউইথ অডিও সেটিংস
-        const audioConstraints = {
-            video: false,
-            audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true,
-                sampleSize: 16,
-                channelCount: 1
-            }
-        };
+<script>
+    // Generating Short ID (momin-1234)
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    const shortId = 'momin-' + randomNum;
+    const peer = new Peer(shortId);
+    let currentCall;
 
-        // ৩. কল রিসিভ করা
-        peer.on('call', (call) => {
-            if(confirm("Incoming Voice Call... Accept?")) {
-                navigator.mediaDevices.getUserMedia(audioConstraints).then((stream) => {
-                    call.answer(stream);
-                    document.getElementById('status').innerText = "On Call (Optimized)";
-                    call.on('stream', (remoteStream) => {
-                        const audio = new Audio();
-                        audio.srcObject = remoteStream;
-                        audio.play();
-                    });
-                });
-            }
+    peer.on('open', (id) => {
+        document.getElementById('my-id').innerText = id.replace('momin-', '');
+    });
+
+    function copyID() {
+        const id = document.getElementById('my-id').innerText;
+        navigator.clipboard.writeText(id);
+        alert("ID Copied: " + id);
+    }
+
+    // Save and Load Contacts
+    function saveContact() {
+        const name = document.getElementById('contact-name').value;
+        const id = document.getElementById('contact-id').value;
+        if (name && id) {
+            let contacts = JSON.parse(localStorage.getItem('momin_contacts') || '[]');
+            contacts.push({ name, id });
+            localStorage.setItem('momin_contacts', JSON.stringify(contacts));
+            document.getElementById('contact-name').value = '';
+            document.getElementById('contact-id').value = '';
+            loadContacts();
+        }
+    }
+
+    function loadContacts() {
+        const display = document.getElementById('contact-display');
+        let contacts = JSON.parse(localStorage.getItem('momin_contacts') || '[]');
+        display.innerHTML = contacts.length ? '' : '<p style="color: #444; text-align: center;">No Contacts Saved</p>';
+        contacts.forEach((c, index) => {
+            display.innerHTML += `
+                <div class="contact-item">
+                    <span class="contact-name" onclick="selectContact('${c.id}')">${c.name} (ID: ${c.id})</span>
+                    <span class="delete-btn" onclick="deleteContact(${index})">Delete</span>
+                </div>`;
         });
+    }
 
-        // ৪. কল করা
-        function mominStartVoiceCall() {
-            const destId = document.getElementById('peerId').value;
-            if(!destId) return alert("Select a contact first!");
+    function selectContact(id) { document.getElementById('remote-id').value = id; }
+
+    function deleteContact(index) {
+        let contacts = JSON.parse(localStorage.getItem('momin_contacts'));
+        contacts.splice(index, 1);
+        localStorage.setItem('momin_contacts', JSON.stringify(contacts));
+        loadContacts();
+    }
+
+    // Call Functions
+    peer.on('call', (call) => {
+        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+            call.answer(stream);
+            handleCall(call);
+        });
+    });
+
+    function makeCall() {
+        const idInput = document.getElementById('remote-id').value;
+        if (!idInput) return alert("Please enter an ID");
+        
+        const fullId = 'momin-' + idInput;
+        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+            const call = peer.call(fullId, stream);
+            handleCall(call);
+        }).catch(err => alert("Microphone access is required!"));
+    }
+
+    function handleCall(call) {
+        currentCall = call;
+        call.on('stream', (remoteStream) => {
+            const audio = new Audio();
+            audio.srcObject = remoteStream;
+            audio.play();
             
-            document.getElementById('status').innerText = "Connecting...";
-            navigator.mediaDevices.getUserMedia(audioConstraints).then((stream) => {
-                const call = peer.call(destId, stream);
-                call.on('stream', (remoteStream) => {
-                    document.getElementById('status').innerText = "On Call (Optimized)";
-                    const audio = new Audio();
-                    audio.srcObject = remoteStream;
-                    audio.play();
-                });
-            }).catch(err => {
-                alert("Microphone Access Required!");
-            });
-        }
+            document.getElementById('status-msg').style.display = 'block';
+            document.getElementById('start-btn').style.display = 'none';
+            document.getElementById('end-btn').style.display = 'block';
+            document.getElementById('add-contact-box').style.display = 'none';
+            document.getElementById('remote-id').style.display = 'none';
+        });
+        call.on('close', () => location.reload());
+    }
 
-        // কন্টাক্ট ও কপি ফাংশন (আগের মতোই রাখা হয়েছে)
-        function mominAddContact() {
-            let name = document.getElementById('newName').value.trim();
-            let id = document.getElementById('newId').value.trim();
-            if(name && id) {
-                let contacts = JSON.parse(localStorage.getItem('mominContacts') || '[]');
-                contacts.push({ name: name, id: id });
-                localStorage.setItem('mominContacts', JSON.stringify(contacts));
-                mominDisplayContacts();
-                document.getElementById('newName').value = '';
-                document.getElementById('newId').value = '';
-            }
-        }
+    function endCall() {
+        if (currentCall) currentCall.close();
+        location.reload();
+    }
 
-        function mominDisplayContacts() {
-            let list = document.getElementById('contact-list');
-            let contacts = JSON.parse(localStorage.getItem('mominContacts') || '[]');
-            list.innerHTML = contacts.length === 0 ? '<div style="color:#555;">No Contacts</div>' : '';
-            contacts.forEach((item, index) => {
-                let div = document.createElement('div');
-                div.className = 'contact-item';
-                div.innerHTML = `<span class="name-tag" onclick="document.getElementById('peerId').value='${item.id}'">${item.name}</span>
-                                 <button class="delete-btn" onclick="mominDeleteContact(${index})">X</button>`;
-                list.appendChild(div);
-            });
-        }
+    window.onload = loadContacts;
+</script>
 
-        function mominDeleteContact(index) {
-            let contacts = JSON.parse(localStorage.getItem('mominContacts') || '[]');
-            contacts.splice(index, 1);
-            localStorage.setItem('mominContacts', JSON.stringify(contacts));
-            mominDisplayContacts();
-        }
-
-        function mominPrepareCopy() {
-            let box = document.getElementById('copy-box');
-            box.value = document.getElementById('my-id-display').innerText;
-            box.style.display = 'block';
-            box.select();
-            document.execCommand('copy');
-        }
-
-        window.onload = mominDisplayContacts;
-    </script>
 </body>
 </html>
