@@ -1,0 +1,6 @@
+{
+  "name": "Momin Call",
+  "description": "Free Call App",
+  "launch_path": "/index.html",
+  "icons": { "128": "/icon.png" }
+}
