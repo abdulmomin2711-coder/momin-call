@@ -4,37 +4,129 @@
     <meta charset="utf-8">
     <title>Momin Call</title>
     <style>
-        body { background: #000; color: #fff; text-align: center; padding: 20px; font-family: Arial; }
-        #display { font-size: 14px; margin-top: 20px; color: #0f0; word-wrap: break-word; font-weight: bold; }
-        input { width: 85%; padding: 12px; margin-top: 25px; border-radius: 5px; border: 1px solid #0f0; background: #222; color: #fff; }
-        button { width: 90%; padding: 12px; margin-top: 15px; background: #0f0; color: #000; border: none; font-weight: bold; cursor: pointer; border-radius: 5px; text-transform: uppercase; }
-        .label { font-size: 12px; color: #aaa; margin-top: 10px; }
+        body { background: #000; color: #fff; text-align: center; padding: 15px; font-family: Arial, sans-serif; }
+        #display-container { background: #111; padding: 10px; border-radius: 8px; border: 1px dashed #444; margin-bottom: 15px; }
+        #display { font-size: 14px; color: #0f0; word-wrap: break-word; font-weight: bold; margin-bottom: 8px; }
+        
+        input { width: 90%; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #444; background: #222; color: #fff; font-size: 14px; }
+        .call-input { border: 1px solid #0f0; }
+        
+        button { width: 95%; padding: 12px; margin-top: 10px; border-radius: 5px; font-weight: bold; text-transform: uppercase; cursor: pointer; border: none; }
+        #callBtn { background: #0f0; color: #000; }
+        #saveBtn { background: #008cba; color: #fff; font-size: 12px; }
+        #copyBtn { background: #444; color: #fff; width: auto; padding: 5px 15px; font-size: 11px; }
+        
+        .label { font-size: 11px; color: #aaa; margin-bottom: 5px; }
+        
+        /* Contact List Styling */
+        #contact-list { margin-top: 20px; text-align: left; background: #111; padding: 10px; border-radius: 8px; max-height: 200px; overflow-y: auto; }
+        .contact-item { padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+        .contact-item:hover { background: #222; }
+        .name-tag { color: #0f0; font-weight: bold; }
+        .delete-btn { color: #ff4444; font-size: 10px; background: none; border: 1px solid #ff4444; width: auto; padding: 2px 8px; margin: 0; }
     </style>
 </head>
 <body>
     <h3>Momin Call</h3>
     
-    <div class="label">YOUR UNIQUE ID:</div>
-    <div id="display">Connecting to network...</div>
+    <div id="display-container">
+        <div class="label">YOUR PERMANENT ID:</div>
+        <div id="display">Initializing...</div>
+        <button id="copyBtn" onclick="copyId()">COPY ID</button>
+    </div>
+
+    <div style="background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+        <div class="label">ADD NEW CONTACT:</div>
+        <input type="text" id="newName" placeholder="Friend Name">
+        <input type="text" id="newId" placeholder="Friend ID">
+        <button id="saveBtn" onclick="addContact()">Save Contact</button>
+    </div>
     
-    <input type="text" id="peerId" placeholder="Paste Friend ID Here">
-    <br>
-    <button id="callBtn">Start Call</button>
+    <div class="label">READY TO CALL:</div>
+    <input type="text" id="peerId" class="call-input" placeholder="Selected Friend ID">
+    <button id="callBtn" onclick="startCall()">Start Call Now</button>
+
+    <div class="label" style="margin-top:20px;">SAVED CONTACTS:</div>
+    <div id="contact-list"></div>
 
     <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     <script src="app.js"></script>
     
-    <script src="https://api.kaiads.com/v1/sdk.js"></script>
     <script>
-      getKaiAd({
-        publisher: '1799561b-0084-4b48-89e4-2528e5dfd51f',
-        app: 'momin-call',
-        slot: 'main',
-        onerror: err => console.error('Ad error:', err),
-        onready: ad => {
-          ad.call('display')
+        // 1. Peer Setup with Permanent ID
+        let mySavedId = localStorage.getItem('mominCallMyId');
+        if (!mySavedId) {
+            mySavedId = 'momin-' + Math.floor(Math.random() * 1000000);
+            localStorage.setItem('mominCallMyId', mySavedId);
         }
-      });
+        const peer = new Peer(mySavedId);
+        peer.on('open', (id) => { document.getElementById('display').innerText = id; });
+
+        // 2. Load Contacts on Startup
+        window.onload = function() {
+            displayContacts();
+        };
+
+        // 3. Add New Contact
+        function addContact() {
+            let name = document.getElementById('newName').value;
+            let id = document.getElementById('newId').value;
+            if(name && id) {
+                let contacts = JSON.parse(localStorage.getItem('mominContacts') || '[]');
+                contacts.push({ name: name, id: id });
+                localStorage.setItem('mominContacts', JSON.stringify(contacts));
+                document.getElementById('newName').value = '';
+                document.getElementById('newId').value = '';
+                displayContacts();
+            }
+        }
+
+        // 4. Display Saved Contacts
+        function displayContacts() {
+            let list = document.getElementById('contact-list');
+            let contacts = JSON.parse(localStorage.getItem('mominContacts') || '[]');
+            list.innerHTML = contacts.length === 0 ? '<div style="font-size:12px;color:#666;text-align:center;">No contacts saved.</div>' : '';
+            
+            contacts.forEach((item, index) => {
+                let div = document.createElement('div');
+                div.className = 'contact-item';
+                div.innerHTML = `<span class="name-tag" onclick="selectContact('${item.id}')">${item.name}</span>
+                                 <button class="delete-btn" onclick="deleteContact(${index})">X</button>`;
+                list.appendChild(div);
+            });
+        }
+
+        // 5. Select Contact to Call
+        function selectContact(id) {
+            document.getElementById('peerId').value = id;
+        }
+
+        // 6. Delete Contact
+        function deleteContact(index) {
+            let contacts = JSON.parse(localStorage.getItem('mominContacts') || '[]');
+            contacts.splice(index, 1);
+            localStorage.setItem('mominContacts', JSON.stringify(contacts));
+            displayContacts();
+        }
+
+        function startCall() {
+            // Logic handled by app.js through peerId input
+        }
+
+        function copyId() {
+            let idText = document.getElementById("display").innerText;
+            if(idText && idText !== "Initializing...") {
+                let textArea = document.createElement("textarea");
+                textArea.value = idText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                let btn = document.getElementById("copyBtn");
+                btn.innerText = "COPIED!";
+                setTimeout(() => btn.innerText = "COPY ID", 2000);
+            }
+        }
     </script>
 </body>
 </html>
