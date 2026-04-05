@@ -5,128 +5,114 @@
     <title>Momin Call</title>
     <style>
         body { background: #000; color: #fff; text-align: center; padding: 15px; font-family: Arial, sans-serif; }
-        #display-container { background: #111; padding: 10px; border-radius: 8px; border: 1px dashed #444; margin-bottom: 15px; }
-        #display { font-size: 14px; color: #0f0; word-wrap: break-word; font-weight: bold; margin-bottom: 8px; }
-        
+        #id-section { background: #111; padding: 10px; border-radius: 8px; border: 1px dashed #444; margin-bottom: 15px; }
+        #my-id-box { 
+            width: 90%; background: #000; color: #0f0; border: 1px solid #333; 
+            padding: 10px; text-align: center; font-weight: bold; font-size: 13px; 
+            margin-bottom: 10px; border-radius: 5px; cursor: pointer;
+        }
         input { width: 90%; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #444; background: #222; color: #fff; font-size: 14px; }
         .call-input { border: 1px solid #0f0; }
-        
         button { width: 95%; padding: 12px; margin-top: 10px; border-radius: 5px; font-weight: bold; text-transform: uppercase; cursor: pointer; border: none; }
         #callBtn { background: #0f0; color: #000; }
         #saveBtn { background: #008cba; color: #fff; font-size: 12px; }
-        #copyBtn { background: #444; color: #fff; width: auto; padding: 5px 15px; font-size: 11px; }
-        
-        .label { font-size: 11px; color: #aaa; margin-bottom: 5px; }
-        
-        /* Contact List Styling */
-        #contact-list { margin-top: 20px; text-align: left; background: #111; padding: 10px; border-radius: 8px; max-height: 200px; overflow-y: auto; }
-        .contact-item { padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
-        .contact-item:hover { background: #222; }
-        .name-tag { color: #0f0; font-weight: bold; }
-        .delete-btn { color: #ff4444; font-size: 10px; background: none; border: 1px solid #ff4444; width: auto; padding: 2px 8px; margin: 0; }
+        .label { font-size: 11px; color: #aaa; margin-bottom: 5px; text-transform: uppercase; }
+        #contact-container { margin-top: 20px; text-align: left; background: #111; padding: 10px; border-radius: 8px; }
+        #contact-list { max-height: 200px; overflow-y: auto; margin-top: 5px; }
+        .contact-item { padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .name-tag { color: #0f0; font-weight: bold; cursor: pointer; }
+        .delete-btn { color: #ff4444; font-size: 10px; background: none; border: 1px solid #ff4444; width: auto; padding: 2px 8px; }
     </style>
 </head>
 <body>
     <h3>Momin Call</h3>
     
-    <div id="display-container">
-        <div class="label">YOUR PERMANENT ID:</div>
-        <div id="display">Initializing...</div>
-        <button id="copyBtn" onclick="copyId()">COPY ID</button>
+    <div id="id-section">
+        <div class="label">Your Permanent ID (Tap to Select):</div>
+        <input type="text" id="my-id-box" value="Loading ID..." readonly onclick="this.select();">
     </div>
 
     <div style="background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
-        <div class="label">ADD NEW CONTACT:</div>
-        <input type="text" id="newName" placeholder="Friend Name">
-        <input type="text" id="newId" placeholder="Friend ID">
-        <button id="saveBtn" onclick="addContact()">Save Contact</button>
+        <div class="label">Add New Contact:</div>
+        <input type="text" id="newName" placeholder="Enter Friend Name">
+        <input type="text" id="newId" placeholder="Enter Friend ID">
+        <button id="saveBtn" onclick="mominAddContact()">Save to List</button>
     </div>
     
-    <div class="label">READY TO CALL:</div>
-    <input type="text" id="peerId" class="call-input" placeholder="Selected Friend ID">
-    <button id="callBtn" onclick="startCall()">Start Call Now</button>
+    <div class="label">Ready to Call:</div>
+    <input type="text" id="peerId" class="call-input" placeholder="Paste or Select ID">
+    <button id="callBtn">Start Call Now</button>
 
-    <div class="label" style="margin-top:20px;">SAVED CONTACTS:</div>
-    <div id="contact-list"></div>
+    <div id="contact-container">
+        <div class="label">Saved Contacts:</div>
+        <div id="contact-list"></div>
+    </div>
 
     <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
-    <script src="app.js"></script>
     
     <script>
-        // 1. Peer Setup with Permanent ID
+        // Use the saved ID from Mominshop storage
         let mySavedId = localStorage.getItem('mominCallMyId');
         if (!mySavedId) {
             mySavedId = 'momin-' + Math.floor(Math.random() * 1000000);
             localStorage.setItem('mominCallMyId', mySavedId);
         }
+        
+        // Setup Peer
         const peer = new Peer(mySavedId);
-        peer.on('open', (id) => { document.getElementById('display').innerText = id; });
+        peer.on('open', (id) => { 
+            document.getElementById('my-id-box').value = id; 
+        });
 
-        // 2. Load Contacts on Startup
-        window.onload = function() {
-            displayContacts();
-        };
+        // Error handling if ID fails to load
+        peer.on('error', (err) => {
+            console.error(err);
+            document.getElementById('my-id-box').value = "Error loading ID";
+        });
 
-        // 3. Add New Contact
-        function addContact() {
-            let name = document.getElementById('newName').value;
-            let id = document.getElementById('newId').value;
+        function mominAddContact() {
+            let name = document.getElementById('newName').value.trim();
+            let id = document.getElementById('newId').value.trim();
             if(name && id) {
                 let contacts = JSON.parse(localStorage.getItem('mominContacts') || '[]');
                 contacts.push({ name: name, id: id });
                 localStorage.setItem('mominContacts', JSON.stringify(contacts));
                 document.getElementById('newName').value = '';
                 document.getElementById('newId').value = '';
-                displayContacts();
+                mominDisplayContacts();
             }
         }
 
-        // 4. Display Saved Contacts
-        function displayContacts() {
+        function mominDisplayContacts() {
             let list = document.getElementById('contact-list');
             let contacts = JSON.parse(localStorage.getItem('mominContacts') || '[]');
-            list.innerHTML = contacts.length === 0 ? '<div style="font-size:12px;color:#666;text-align:center;">No contacts saved.</div>' : '';
-            
+            if(contacts.length === 0) {
+                list.innerHTML = '<div style="font-size:11px;color:#555;text-align:center;padding:10px;">No Saved Contacts</div>';
+                return;
+            }
+            list.innerHTML = '';
             contacts.forEach((item, index) => {
                 let div = document.createElement('div');
                 div.className = 'contact-item';
-                div.innerHTML = `<span class="name-tag" onclick="selectContact('${item.id}')">${item.name}</span>
-                                 <button class="delete-btn" onclick="deleteContact(${index})">X</button>`;
+                div.innerHTML = `
+                    <span class="name-tag" onclick="mominSelectContact('${item.id}')">${item.name}</span>
+                    <button class="delete-btn" onclick="mominDeleteContact(${index})">REMOVE</button>
+                `;
                 list.appendChild(div);
             });
         }
 
-        // 5. Select Contact to Call
-        function selectContact(id) {
-            document.getElementById('peerId').value = id;
-        }
-
-        // 6. Delete Contact
-        function deleteContact(index) {
+        function mominSelectContact(id) { document.getElementById('peerId').value = id; }
+        function mominDeleteContact(index) {
             let contacts = JSON.parse(localStorage.getItem('mominContacts') || '[]');
             contacts.splice(index, 1);
             localStorage.setItem('mominContacts', JSON.stringify(contacts));
-            displayContacts();
+            mominDisplayContacts();
         }
 
-        function startCall() {
-            // Logic handled by app.js through peerId input
-        }
-
-        function copyId() {
-            let idText = document.getElementById("display").innerText;
-            if(idText && idText !== "Initializing...") {
-                let textArea = document.createElement("textarea");
-                textArea.value = idText;
-                document.body.appendChild(textArea);
-                textArea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textArea);
-                let btn = document.getElementById("copyBtn");
-                btn.innerText = "COPIED!";
-                setTimeout(() => btn.innerText = "COPY ID", 2000);
-            }
-        }
+        window.onload = mominDisplayContacts;
     </script>
+    <script src="app.js"></script>
 </body>
-</html>
+            </html>
+            
