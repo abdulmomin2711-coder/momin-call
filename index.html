@@ -6,36 +6,48 @@
     <style>
         body { background: #000; color: #fff; text-align: center; padding: 15px; font-family: Arial, sans-serif; }
         #id-section { background: #111; padding: 10px; border-radius: 8px; border: 1px dashed #444; margin-bottom: 15px; }
-        #my-id-box { 
-            width: 90%; background: #000; color: #0f0; border: 1px solid #333; 
-            padding: 10px; text-align: center; font-weight: bold; font-size: 13px; 
-            margin-bottom: 10px; border-radius: 5px; cursor: pointer;
+        
+        /* Your ID Display */
+        #my-id-display { color: #0f0; font-weight: bold; font-size: 14px; margin-bottom: 10px; word-wrap: break-word; }
+        
+        /* Copy Assistant Box */
+        #copy-box { 
+            width: 90%; background: #222; color: #fff; border: 1px solid #0f0; 
+            padding: 10px; text-align: center; font-size: 13px; 
+            margin-top: 10px; border-radius: 5px; display: none;
         }
+
         input { width: 90%; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #444; background: #222; color: #fff; font-size: 14px; }
         .call-input { border: 1px solid #0f0; }
+        
         button { width: 95%; padding: 12px; margin-top: 10px; border-radius: 5px; font-weight: bold; text-transform: uppercase; cursor: pointer; border: none; }
         #callBtn { background: #0f0; color: #000; }
         #saveBtn { background: #008cba; color: #fff; font-size: 12px; }
+        #copyBtn { background: #444; color: #fff; font-size: 12px; width: auto; padding: 5px 20px; }
+        
         .label { font-size: 11px; color: #aaa; margin-bottom: 5px; text-transform: uppercase; }
-        #contact-container { margin-top: 20px; text-align: left; background: #111; padding: 10px; border-radius: 8px; }
-        #contact-list { max-height: 200px; overflow-y: auto; margin-top: 5px; }
+        
+        #contact-list { max-height: 200px; overflow-y: auto; margin-top: 5px; text-align: left; background: #111; padding: 10px; border-radius: 8px; }
         .contact-item { padding: 10px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
         .name-tag { color: #0f0; font-weight: bold; cursor: pointer; }
-        .delete-btn { color: #ff4444; font-size: 10px; background: none; border: 1px solid #ff4444; width: auto; padding: 2px 8px; }
+        .delete-btn { color: #ff4444; font-size: 10px; background: none; border: 1px solid #ff4444; padding: 2px 8px; }
     </style>
 </head>
 <body>
     <h3>Momin Call</h3>
     
     <div id="id-section">
-        <div class="label">Your Permanent ID (Tap to Select):</div>
-        <input type="text" id="my-id-box" value="Loading ID..." readonly onclick="this.select();">
+        <div class="label">Your Permanent ID:</div>
+        <div id="my-id-display">Loading...</div>
+        <button id="copyBtn" onclick="prepareCopy()">COPY ID</button>
+        <input type="text" id="copy-box" readonly onclick="this.select();">
+        <div id="copy-hint" style="font-size:10px; color:#aaa; margin-top:5px; display:none;">Long press the ID above to copy</div>
     </div>
 
     <div style="background: #1a1a1a; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
         <div class="label">Add New Contact:</div>
-        <input type="text" id="newName" placeholder="Enter Friend Name">
-        <input type="text" id="newId" placeholder="Enter Friend ID">
+        <input type="text" id="newName" placeholder="Friend Name">
+        <input type="text" id="newId" placeholder="Friend ID">
         <button id="saveBtn" onclick="mominAddContact()">Save to List</button>
     </div>
     
@@ -43,32 +55,40 @@
     <input type="text" id="peerId" class="call-input" placeholder="Paste or Select ID">
     <button id="callBtn">Start Call Now</button>
 
-    <div id="contact-container">
-        <div class="label">Saved Contacts:</div>
-        <div id="contact-list"></div>
-    </div>
+    <div class="label" style="margin-top:20px;">Saved Contacts:</div>
+    <div id="contact-list"></div>
 
     <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
     
     <script>
-        // Use the saved ID from Mominshop storage
         let mySavedId = localStorage.getItem('mominCallMyId');
         if (!mySavedId) {
             mySavedId = 'momin-' + Math.floor(Math.random() * 1000000);
             localStorage.setItem('mominCallMyId', mySavedId);
         }
         
-        // Setup Peer
         const peer = new Peer(mySavedId);
         peer.on('open', (id) => { 
-            document.getElementById('my-id-box').value = id; 
+            document.getElementById('my-id-display').innerText = id; 
         });
 
-        // Error handling if ID fails to load
-        peer.on('error', (err) => {
-            console.error(err);
-            document.getElementById('my-id-box').value = "Error loading ID";
-        });
+        // Safe Copy Function
+        function prepareCopy() {
+            let id = document.getElementById('my-id-display').innerText;
+            let box = document.getElementById('copy-box');
+            let hint = document.getElementById('copy-hint');
+            
+            box.value = id;
+            box.style.display = 'block';
+            hint.style.display = 'block';
+            box.select();
+            
+            // Try auto-copy
+            try {
+                document.execCommand('copy');
+                document.getElementById('copyBtn').innerText = 'READY TO COPY';
+            } catch(e) {}
+        }
 
         function mominAddContact() {
             let name = document.getElementById('newName').value.trim();
@@ -87,22 +107,19 @@
             let list = document.getElementById('contact-list');
             let contacts = JSON.parse(localStorage.getItem('mominContacts') || '[]');
             if(contacts.length === 0) {
-                list.innerHTML = '<div style="font-size:11px;color:#555;text-align:center;padding:10px;">No Saved Contacts</div>';
+                list.innerHTML = '<div style="font-size:11px;color:#555;text-align:center;">No Contacts</div>';
                 return;
             }
             list.innerHTML = '';
             contacts.forEach((item, index) => {
                 let div = document.createElement('div');
                 div.className = 'contact-item';
-                div.innerHTML = `
-                    <span class="name-tag" onclick="mominSelectContact('${item.id}')">${item.name}</span>
-                    <button class="delete-btn" onclick="mominDeleteContact(${index})">REMOVE</button>
-                `;
+                div.innerHTML = `<span class="name-tag" onclick="document.getElementById('peerId').value='${item.id}'">${item.name}</span>
+                                 <button class="delete-btn" onclick="mominDeleteContact(${index})">X</button>`;
                 list.appendChild(div);
             });
         }
 
-        function mominSelectContact(id) { document.getElementById('peerId').value = id; }
         function mominDeleteContact(index) {
             let contacts = JSON.parse(localStorage.getItem('mominContacts') || '[]');
             contacts.splice(index, 1);
@@ -114,5 +131,4 @@
     </script>
     <script src="app.js"></script>
 </body>
-            </html>
-            
+</html>
