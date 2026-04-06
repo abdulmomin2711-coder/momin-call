@@ -22,6 +22,10 @@
         .contact-name { color: #00FF00; font-weight: bold; font-size: 16px; }
         .delete-btn { color: #ff3b30; font-weight: bold; padding: 5px 10px; border: 1px solid #ff3b30; border-radius: 5px; }
         #status-msg { margin: 10px 0; font-size: 16px; font-weight: bold; color: #00FF00; display: none; }
+        
+        /* Volume Control Design */
+        #volume-container { display: none; margin-top: 15px; background: #222; padding: 15px; border-radius: 10px; }
+        input[type=range] { width: 80%; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -37,6 +41,11 @@
     </div>
 
     <div id="status-msg">Call Ongoing...</div>
+
+    <div id="volume-container">
+        <p style="margin: 0 0 5px 0; font-size: 14px;">Volume Control</p>
+        <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1">
+    </div>
 
     <div class="box" id="add-contact-box">
         <p style="margin: 0 0 10px 0; color: #aaa; font-size: 13px;">ADD NEW CONTACT</p>
@@ -59,11 +68,17 @@
 </div>
 
 <script>
-    // Generating Short ID (momin-1234)
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    const shortId = 'momin-' + randomNum;
-    const peer = new Peer(shortId);
+    // Logic for Permanent ID
+    let mySavedId = localStorage.getItem('momin_app_permanent_id');
+    if (!mySavedId) {
+        mySavedId = Math.floor(1000 + Math.random() * 9000).toString();
+        localStorage.setItem('momin_app_permanent_id', mySavedId);
+    }
+
+    const fullId = 'momin-' + mySavedId;
+    const peer = new Peer(fullId);
     let currentCall;
+    const remoteAudio = new Audio();
 
     peer.on('open', (id) => {
         document.getElementById('my-id').innerText = id.replace('momin-', '');
@@ -111,6 +126,11 @@
         loadContacts();
     }
 
+    // Volume Slider Event
+    document.getElementById('volume-slider').addEventListener('input', (e) => {
+        remoteAudio.volume = e.target.value;
+    });
+
     // Call Functions
     peer.on('call', (call) => {
         navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
@@ -123,9 +143,9 @@
         const idInput = document.getElementById('remote-id').value;
         if (!idInput) return alert("Please enter an ID");
         
-        const fullId = 'momin-' + idInput;
+        const targetId = 'momin-' + idInput;
         navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-            const call = peer.call(fullId, stream);
+            const call = peer.call(targetId, stream);
             handleCall(call);
         }).catch(err => alert("Microphone access is required!"));
     }
@@ -133,15 +153,15 @@
     function handleCall(call) {
         currentCall = call;
         call.on('stream', (remoteStream) => {
-            const audio = new Audio();
-            audio.srcObject = remoteStream;
-            audio.play();
+            remoteAudio.srcObject = remoteStream;
+            remoteAudio.play();
             
             document.getElementById('status-msg').style.display = 'block';
+            document.getElementById('volume-container').style.display = 'block';
             document.getElementById('start-btn').style.display = 'none';
             document.getElementById('end-btn').style.display = 'block';
             document.getElementById('add-contact-box').style.display = 'none';
-            document.getElementById('remote-id').style.display = 'none';
+            document.getElementById('call-box').style.display = 'none';
         });
         call.on('close', () => location.reload());
     }
@@ -155,4 +175,5 @@
 </script>
 
 </body>
-</html>
+            </html>
+
