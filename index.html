@@ -10,7 +10,7 @@
         .main-container { max-width: 450px; margin: auto; }
         h2 { margin: 15px 0; font-size: 24px; }
         .box { background: #151515; border: 1px dashed #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
-        .id-text { color: #00FF00; font-size: 26px; font-weight: bold; margin: 5px 0; letter-spacing: 2px; }
+        .id-text { color: #00FF00; font-size: 28px; font-weight: bold; margin: 5px 0; letter-spacing: 2px; }
         input { width: 90%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #333; background: #222; color: #fff; text-align: center; font-size: 16px; outline: none; }
         input:focus { border-color: #00FF00; }
         .btn { width: 95%; padding: 14px; border: none; border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.3s; margin-top: 5px; }
@@ -21,11 +21,11 @@
         .contact-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #222; cursor: pointer; }
         .contact-name { color: #00FF00; font-weight: bold; font-size: 16px; }
         .delete-btn { color: #ff3b30; font-weight: bold; padding: 5px 10px; border: 1px solid #ff3b30; border-radius: 5px; }
-        #status-msg { margin: 10px 0; font-size: 16px; font-weight: bold; color: #00FF00; display: none; }
         
-        /* Volume Control Design */
-        #volume-container { display: none; margin-top: 15px; background: #222; padding: 15px; border-radius: 10px; }
-        input[type=range] { width: 80%; cursor: pointer; }
+        /* Volume Control Box */
+        #volume-box { display: none; background: #1a1a1a; padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
+        input[type=range] { width: 85%; cursor: pointer; accent-color: #00FF00; }
+        #status-msg { margin: 10px 0; font-size: 16px; font-weight: bold; color: #00FF00; display: none; }
     </style>
 </head>
 <body>
@@ -36,20 +36,20 @@
 
     <div class="box">
         <p style="margin: 0; color: #aaa; font-size: 12px;">YOUR PERMANENT ID</p>
-        <div id="my-id" class="id-text">Loading...</div>
+        <div id="my-id" class="id-text">Connecting...</div>
         <button onclick="copyID()" style="background: #333; color: #00FF00; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-size: 12px;">Copy ID</button>
     </div>
 
     <div id="status-msg">Call Ongoing...</div>
 
-    <div id="volume-container">
-        <p style="margin: 0 0 5px 0; font-size: 14px;">Volume Control</p>
+    <div id="volume-box">
+        <p style="margin: 0 0 10px 0; font-size: 14px; color: #aaa;">Speaker Volume</p>
         <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1">
     </div>
 
     <div class="box" id="add-contact-box">
         <p style="margin: 0 0 10px 0; color: #aaa; font-size: 13px;">ADD NEW CONTACT</p>
-        <input type="text" id="contact-name" placeholder="Name">
+        <input type="text" id="contact-name" placeholder="Friend's Name">
         <input type="number" id="contact-id" placeholder="4 Digit ID">
         <button id="save-btn" class="btn" onclick="saveContact()">Save Contact</button>
     </div>
@@ -68,14 +68,14 @@
 </div>
 
 <script>
-    // Logic for Permanent ID
-    let mySavedId = localStorage.getItem('momin_app_permanent_id');
-    if (!mySavedId) {
-        mySavedId = Math.floor(1000 + Math.random() * 9000).toString();
-        localStorage.setItem('momin_app_permanent_id', mySavedId);
+    // Logic for Permanent 4-Digit ID
+    let myStoredId = localStorage.getItem('momin_app_permanent_id');
+    if (!myStoredId) {
+        myStoredId = Math.floor(1000 + Math.random() * 9000).toString();
+        localStorage.setItem('momin_app_permanent_id', myStoredId);
     }
 
-    const fullId = 'momin-' + mySavedId;
+    const fullId = 'momin-' + myStoredId;
     const peer = new Peer(fullId);
     let currentCall;
     const remoteAudio = new Audio();
@@ -136,7 +136,7 @@
         navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
             call.answer(stream);
             handleCall(call);
-        });
+        }).catch(err => alert("Microphone access is required!"));
     });
 
     function makeCall() {
@@ -157,7 +157,7 @@
             remoteAudio.play();
             
             document.getElementById('status-msg').style.display = 'block';
-            document.getElementById('volume-container').style.display = 'block';
+            document.getElementById('volume-box').style.display = 'block';
             document.getElementById('start-btn').style.display = 'none';
             document.getElementById('end-btn').style.display = 'block';
             document.getElementById('add-contact-box').style.display = 'none';
@@ -175,5 +175,5 @@
 </script>
 
 </body>
-            </html>
+</html>
 
