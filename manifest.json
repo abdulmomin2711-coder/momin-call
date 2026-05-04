@@ -1,0 +1,17 @@
+{
+  "short_name": "MominCall",
+  "name": "Momin Voice Call Pro",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#00FF00",
+  "gcm_sender_id": "103953800507"
+}
+
