@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Momin Voice Call Pro</title>
+    <link rel="manifest" href="manifest.json">
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-    
-    <script src="https://pl29084947.profitablecpmratenetwork.com/e6/42/6c/e6426cf4b9d71d87245568208ae31564.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #0a0a0a; color: #ffffff; text-align: center; padding: 10px; margin: 0; }
@@ -22,194 +24,147 @@
         .contact-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #222; }
         .contact-name { color: #00FF00; font-weight: bold; font-size: 16px; cursor: pointer; }
         .delete-btn { color: #ff3b30; font-weight: bold; padding: 5px 10px; border: 1px solid #ff3b30; border-radius: 5px; cursor: pointer; }
-
-        /* Professional Call Screen UI */
-        #call-screen {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to bottom, #1e1e1e, #000000); z-index: 1000;
-            flex-direction: column; align-items: center; justify-content: space-around;
-        }
+        #call-screen { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(to bottom, #1e1e1e, #000000); z-index: 1000; flex-direction: column; align-items: center; justify-content: space-around; }
         .profile-img { width: 120px; height: 120px; border-radius: 50%; background: #333; border: 3px solid #00FF00; margin-bottom: 10px; }
         .caller-name { font-size: 26px; font-weight: bold; }
         .call-status { color: #00FF00; margin-top: 5px; font-weight: bold; }
         .call-actions { display: flex; gap: 25px; margin-bottom: 40px; }
         .action-circle { background: rgba(255,255,255,0.1); width: 65px; height: 65px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px; cursor: pointer; }
         .hangup-circle { background: #FF3B30 !important; width: 75px; height: 75px; }
-        #volume-slider { width: 80%; accent-color: #00FF00; margin-bottom: 15px; }
     </style>
 </head>
-<body onclick="enableAudio()"> <div id="main-ui" class="main-container">
-    <h2>Momin Voice Call</h2>
-    <p style="color: #666; font-size: 12px; margin-bottom: 20px;">Network Optimized for All Browsers</p>
-
-    <div class="box">
-        <p style="margin: 0; color: #aaa; font-size: 12px;">YOUR PERMANENT ID</p>
-        <div id="my-id" class="id-text">Connecting...</div>
-        <button onclick="copyID()" style="background: #333; color: #00FF00; border: none; padding: 5px 15px; border-radius: 5px; cursor: pointer; font-size: 12px;">Copy ID</button>
+<body onclick="enableAudio()">
+    <div id="main-ui" class="main-container">
+        <h2>Momin Voice Call</h2>
+        <div class="box">
+            <p style="margin: 0; color: #aaa; font-size: 12px;">YOUR ID</p>
+            <div id="my-id" class="id-text">...</div>
+            <button onclick="copyID()" style="background: #333; color: #00FF00; border: none; padding: 5px 10px; border-radius: 5px; cursor: pointer;">Copy ID</button>
+        </div>
+        <div class="box">
+            <input type="text" id="contact-name" placeholder="Name">
+            <input type="number" id="contact-id" placeholder="4 Digit ID">
+            <button id="save-btn" class="btn" onclick="saveContact()">Save Contact</button>
+        </div>
+        <div class="box">
+            <input type="number" id="remote-id" placeholder="Enter ID to Call">
+            <button id="start-btn" class="btn" onclick="makeCall()">Start Call</button>
+        </div>
+        <div id="contact-display" class="contact-list"></div>
     </div>
 
-    <div class="box">
-        <p style="margin: 0 0 10px 0; color: #aaa; font-size: 13px;">ADD NEW CONTACT</p>
-        <input type="text" id="contact-name" placeholder="Name">
-        <input type="number" id="contact-id" placeholder="4 Digit ID">
-        <button id="save-btn" class="btn" onclick="saveContact()">Save Contact</button>
+    <div id="call-screen">
+        <div>
+            <div style="display: flex; justify-content: center;"><div class="profile-img"></div></div>
+            <div class="caller-name">Voice Call</div>
+            <div id="call-status-text" class="call-status">Calling...</div>
+        </div>
+        <div class="call-actions">
+            <div class="action-circle hangup-circle" onclick="endCall()">📞</div>
+        </div>
     </div>
 
-    <div class="box">
-        <p style="margin: 0 0 10px 0; color: #aaa; font-size: 13px;">READY TO CALL</p>
-        <input type="number" id="remote-id" placeholder="Enter ID">
-        <button id="start-btn" class="btn" onclick="makeCall()">Start Voice Call</button>
-    </div>
+    <audio id="outgoing-ring" src="https://www.soundjay.com/phone/telephone-ring-03a.mp3" loop></audio>
+    <audio id="incoming-ring" src="https://www.soundjay.com/phone/phone-calling-1.mp3" loop></audio>
 
-    <p style="color: #666; font-size: 13px; font-weight: bold;">SAVED CONTACTS</p>
-    <div id="contact-display" class="contact-list"></div>
-</div>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyBb37fIJwYNKFDLmg9BS_rnFE4SIFx5JYE",
+            authDomain: "momincall-c3359.firebaseapp.com",
+            projectId: "momincall-c3359",
+            storageBucket: "momincall-c3359.firebasestorage.app",
+            messagingSenderId: "480375844238",
+            appId: "1:480375844238:web:4557a048d5ff9c3f7048df"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const messaging = firebase.messaging();
 
-<div id="call-screen">
-    <div>
-        <div style="display: flex; justify-content: center;"><div class="profile-img"></div></div>
-        <div class="caller-name">Voice Call</div>
-        <div class="call-status" id="call-status-text">Calling...</div>
-    </div>
+        let myStoredId = localStorage.getItem('momin_app_permanent_id') || Math.floor(1000 + Math.random() * 9000).toString();
+        localStorage.setItem('momin_app_permanent_id', myStoredId);
 
-    <div style="width: 100%;">
-        <p style="font-size: 12px; color: #aaa;">Volume Control</p>
-        <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="1">
-    </div>
-
-    <div class="call-actions">
-        <div class="action-circle">🎤</div>
-        <div class="action-circle" id="speaker-icon" onclick="toggleSpeaker()">🔊</div>
-        <div class="action-circle hangup-circle" onclick="endCall()">📞</div>
-    </div>
-</div>
-
-<audio id="outgoing-ring" src="https://www.soundjay.com/phone/telephone-ring-03a.mp3" preload="auto" loop></audio>
-<audio id="incoming-ring" src="https://www.soundjay.com/phone/phone-calling-1.mp3" preload="auto" loop></audio>
-
-<script>
-    let myStoredId = localStorage.getItem('momin_app_permanent_id') || Math.floor(1000 + Math.random() * 9000).toString();
-    localStorage.setItem('momin_app_permanent_id', myStoredId);
-
-    const peer = new Peer('momin-' + myStoredId);
-    let currentCall;
-    const remoteAudio = new Audio();
-    const outgoingSound = document.getElementById('outgoing-ring');
-    const incomingSound = document.getElementById('incoming-ring');
-    let speakerOn = true;
-
-    // ব্রাউজারের অটো-প্লে পলিসি বাইপাস করার ফাংশন
-    function enableAudio() {
-        outgoingSound.play().then(() => { outgoingSound.pause(); });
-        incomingSound.play().then(() => { incomingSound.pause(); });
-    }
-
-    peer.on('open', (id) => { document.getElementById('my-id').innerText = id.replace('momin-', ''); });
-
-    function saveContact() {
-        const name = document.getElementById('contact-name').value;
-        const id = document.getElementById('contact-id').value;
-        if (name && id) {
-            let contacts = JSON.parse(localStorage.getItem('momin_contacts') || '[]');
-            contacts.push({ name, id });
-            localStorage.setItem('momin_contacts', JSON.stringify(contacts));
-            loadContacts();
-            document.getElementById('contact-name').value = '';
-            document.getElementById('contact-id').value = '';
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('firebase-messaging-sw.js').then((reg) => {
+                messaging.useServiceWorker(reg);
+                messaging.getToken().then((token) => {
+                    if(token) database.ref('tokens/' + myStoredId).set(token);
+                });
+            });
         }
-    }
 
-    function loadContacts() {
-        const display = document.getElementById('contact-display');
-        let contacts = JSON.parse(localStorage.getItem('momin_contacts') || '[]');
-        display.innerHTML = contacts.length ? '' : '<p style="color: #444; text-align: center;">No Contacts</p>';
-        contacts.forEach((c, index) => {
-            display.innerHTML += `<div class="contact-item"><span class="contact-name" onclick="selectContact('${c.id}')">${c.name} (${c.id})</span><span class="delete-btn" onclick="deleteContact(${index})">Delete</span></div>`;
+        const peer = new Peer('momin-' + myStoredId);
+        let currentCall;
+        const remoteAudio = new Audio();
+        const outgoingSound = document.getElementById('outgoing-ring');
+        const incomingSound = document.getElementById('incoming-ring');
+
+        peer.on('open', (id) => { document.getElementById('my-id').innerText = id.replace('momin-', ''); });
+
+        peer.on('call', (call) => {
+            incomingSound.play();
+            if(confirm("Incoming Call! Answer?")) {
+                incomingSound.pause();
+                navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+                    call.answer(stream);
+                    openCallScreen("Connected");
+                    handleStream(call);
+                });
+            }
         });
-    }
 
-    function selectContact(id) { document.getElementById('remote-id').value = id; }
-    function deleteContact(index) {
-        let contacts = JSON.parse(localStorage.getItem('momin_contacts'));
-        contacts.splice(index, 1);
-        localStorage.setItem('momin_contacts', JSON.stringify(contacts));
-        loadContacts();
-    }
-
-    // ইনকামিং কল এবং রিংটোন
-    peer.on('call', (call) => {
-        incomingSound.play().catch(e => console.log("Audio play failed"));
-        if(confirm("Incoming Call! Answer?")) {
-            incomingSound.pause();
-            incomingSound.currentTime = 0;
+        function makeCall() {
+            const id = document.getElementById('remote-id').value;
+            if (!id) return alert("Enter ID");
+            outgoingSound.play();
             navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-                call.answer(stream);
-                openCallScreen("Connected");
+                const call = peer.call('momin-' + id, stream);
+                openCallScreen("Calling...");
                 handleStream(call);
             });
-        } else {
-            incomingSound.pause();
         }
-    });
 
-    // আউটগোয়িং কল এবং সাউন্ড
-    function makeCall() {
-        const id = document.getElementById('remote-id').value;
-        if (!id) return alert("Enter ID");
-        
-        outgoingSound.play().catch(e => console.log("Audio play failed"));
-        
-        navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
-            const call = peer.call('momin-' + id, stream);
-            openCallScreen("Calling...");
-            handleStream(call);
-        }).catch(() => {
-            outgoingSound.pause();
-            alert("Mic Permission Required!");
-        });
-    }
-
-    function openCallScreen(status) {
-        document.getElementById('main-ui').style.display = 'none';
-        document.getElementById('call-screen').style.display = 'flex';
-        document.getElementById('call-status-text').innerText = status;
-    }
-
-    function handleStream(call) {
-        currentCall = call;
-        call.on('stream', (stream) => {
-            outgoingSound.pause();
-            outgoingSound.currentTime = 0;
-            remoteAudio.srcObject = stream;
-            remoteAudio.play();
-            document.getElementById('call-status-text').innerText = "In Call";
-        });
-        call.on('close', () => location.reload());
-    }
-
-    // স্পিকার ও ইয়ারপিস কন্ট্রোল
-    function toggleSpeaker() {
-        speakerOn = !speakerOn;
-        if(speakerOn) {
-            remoteAudio.volume = 1.0;
-            document.getElementById('speaker-icon').style.color = "#00FF00";
-            document.getElementById('speaker-icon').innerText = "🔊";
-        } else {
-            remoteAudio.volume = 0.2; 
-            document.getElementById('speaker-icon').style.color = "#ffffff";
-            document.getElementById('speaker-icon').innerText = "🔈";
+        function handleStream(call) {
+            currentCall = call;
+            call.on('stream', (stream) => {
+                outgoingSound.pause();
+                remoteAudio.srcObject = stream;
+                remoteAudio.play();
+                document.getElementById('call-status-text').innerText = "In Call";
+            });
+            call.on('close', () => location.reload());
         }
-    }
 
-    function endCall() { if (currentCall) currentCall.close(); location.reload(); }
-    function copyID() { 
-        const idText = document.getElementById('my-id').innerText;
-        navigator.clipboard.writeText(idText); 
-        alert("ID Copied: " + idText); 
-    }
-    document.getElementById('volume-slider').oninput = (e) => { remoteAudio.volume = e.target.value; };
-    window.onload = loadContacts;
-</script>
+        function openCallScreen(status) {
+            document.getElementById('main-ui').style.display = 'none';
+            document.getElementById('call-screen').style.display = 'flex';
+            document.getElementById('call-status-text').innerText = status;
+        }
+
+        function endCall() { if (currentCall) currentCall.close(); location.reload(); }
+        function copyID() { navigator.clipboard.writeText(document.getElementById('my-id').innerText); alert("ID Copied"); }
+        function enableAudio() { outgoingSound.play().then(()=>outgoingSound.pause()); }
+        
+        function saveContact() {
+            const name = document.getElementById('contact-name').value;
+            const id = document.getElementById('contact-id').value;
+            if (name && id) {
+                let contacts = JSON.parse(localStorage.getItem('momin_contacts') || '[]');
+                contacts.push({ name, id });
+                localStorage.setItem('momin_contacts', JSON.stringify(contacts));
+                loadContacts();
+            }
+        }
+
+        function loadContacts() {
+            const display = document.getElementById('contact-display');
+            let contacts = JSON.parse(localStorage.getItem('momin_contacts') || '[]');
+            display.innerHTML = '';
+            contacts.forEach((c) => {
+                display.innerHTML += `<div class="contact-item"><span class="contact-name" onclick="document.getElementById('remote-id').value='${c.id}'">${c.name} (${c.id})</span></div>`;
+            });
+        }
+        window.onload = () => { loadContacts(); Notification.requestPermission(); };
+    </script>
 </body>
-            </html>
+                </html>
     
