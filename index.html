@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Momin Voice Call - Professional Audio Call</title>
+    <title>Momin Voice Call - Save Contacts</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -24,36 +24,36 @@
             padding: 16px;
         }
         .app {
-            max-width: 480px;
+            max-width: 500px;
             width: 100%;
             margin: auto;
         }
         .card {
             background: #131725;
-            border-radius: 32px;
-            padding: 24px 20px;
-            margin-bottom: 20px;
+            border-radius: 28px;
+            padding: 20px 18px;
+            margin-bottom: 16px;
             border: 1px solid #2a2f45;
             box-shadow: 0 8px 24px rgba(0,0,0,0.4);
         }
         .badge {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
             color: #7e8aa8;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
         .id-box {
             background: #0a0e18;
             border-radius: 60px;
-            padding: 12px 20px;
+            padding: 10px 18px;
             display: inline-block;
-            margin: 10px 0;
+            margin: 8px 0;
             border: 1px solid #2e8b57;
         }
         .id-number {
-            font-size: 38px;
+            font-size: 36px;
             font-weight: 800;
             font-family: monospace;
             color: #2ecc71;
@@ -61,17 +61,17 @@
         }
         .status {
             background: #0e1322;
-            padding: 6px 16px;
+            padding: 5px 14px;
             border-radius: 40px;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 500;
             display: inline-block;
-            margin-top: 8px;
+            margin-top: 6px;
         }
-        input {
+        input, .contact-input {
             width: 100%;
-            padding: 15px 18px;
-            font-size: 17px;
+            padding: 14px 16px;
+            font-size: 16px;
             background: #0e1322;
             border: 1.5px solid #2a3048;
             border-radius: 60px;
@@ -84,14 +84,14 @@
         }
         button {
             width: 100%;
-            padding: 14px;
+            padding: 13px;
             border-radius: 60px;
             font-weight: 700;
-            font-size: 17px;
+            font-size: 16px;
             border: none;
             cursor: pointer;
             transition: 0.2s;
-            margin-top: 14px;
+            margin-top: 12px;
         }
         .btn-call {
             background: linear-gradient(135deg, #2ecc71, #27ae60);
@@ -107,10 +107,15 @@
             background: #2c3e50;
             color: white;
         }
+        .btn-save {
+            background: #3498db;
+            color: white;
+            margin-top: 8px;
+        }
         .incoming-card {
             background: #1e1a2f;
             border-radius: 28px;
-            padding: 20px;
+            padding: 18px;
             margin: 12px 0;
             animation: pulse-ring 1s infinite;
             border-left: 4px solid #f39c12;
@@ -123,7 +128,7 @@
         .flex-row {
             display: flex;
             gap: 12px;
-            margin-top: 16px;
+            margin-top: 14px;
         }
         .flex-row button {
             margin-top: 0;
@@ -131,12 +136,47 @@
         .active-call-box {
             background: #0f2a1a;
             border-radius: 32px;
-            padding: 20px;
+            padding: 18px;
             text-align: center;
             border: 1px solid #2ecc71;
         }
-        .hidden {
-            display: none;
+        .contacts-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+        .contact-item {
+            background: #0e1322;
+            padding: 10px 15px;
+            margin: 6px 0;
+            border-radius: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .contact-item:hover {
+            background: #1a2035;
+            transform: scale(0.98);
+        }
+        .contact-name {
+            font-weight: 600;
+            color: #2ecc71;
+        }
+        .contact-id {
+            font-size: 12px;
+            color: #8e9bbe;
+            font-family: monospace;
+        }
+        .delete-contact {
+            background: #e74c3c;
+            padding: 5px 12px;
+            border-radius: 40px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-top: 0;
+            width: auto;
         }
         .toast-msg {
             position: fixed;
@@ -155,7 +195,13 @@
         button:active { transform: scale(0.97); }
         .hangup-btn {
             background: #e74c3c;
-            margin-top: 16px;
+            margin-top: 14px;
+        }
+        .small-text {
+            font-size: 11px;
+            color: #6c7a9e;
+            margin-top: 8px;
+            text-align: center;
         }
     </style>
 </head>
@@ -167,7 +213,7 @@
         <div class="id-box">
             <span class="id-number" id="myIdDisplay">----</span>
         </div>
-        <div class="status" id="connectionStatus">Online • Ready for calls</div>
+        <div class="status" id="connectionStatus">Online • Ready</div>
     </div>
 
     <!-- Call Section -->
@@ -177,7 +223,22 @@
         <button class="btn-call" id="startCallBtn">START VOICE CALL</button>
     </div>
 
-    <!-- Dynamic Call Area (incoming / active call) -->
+    <!-- Save Contact Section -->
+    <div class="card">
+        <div class="badge">SAVE CONTACT</div>
+        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+            <input type="text" id="contactName" placeholder="Friend's name" style="width: 45%; text-align: left; padding-left: 15px;">
+            <input type="number" id="contactId" placeholder="ID number" style="width: 55%; text-align: left; padding-left: 15px;">
+        </div>
+        <button class="btn-save" id="saveContactBtn">SAVE CONTACT</button>
+        
+        <div class="badge" style="margin-top: 16px;">MY CONTACTS</div>
+        <div id="contactsList" class="contacts-list">
+            <div class="small-text">No contacts saved yet</div>
+        </div>
+    </div>
+
+    <!-- Dynamic Call Area -->
     <div id="callManager"></div>
 </div>
 
@@ -204,36 +265,107 @@
     let ringtone = null;
     let ringtoneInterval = null;
     let ringVolume = 0.1;
+    let outgoingRingback = null;
+    let outgoingRingInterval = null;
 
-    // Professional ringtone with crescendo effect (gradually increasing volume)
-    function startProfessionalRingtone() {
-        stopRingtone();
+    // ---------- CONTACTS MANAGEMENT ----------
+    let contacts = [];
+    
+    function loadContacts() {
+        const saved = localStorage.getItem('momin_contacts');
+        if (saved) {
+            try {
+                contacts = JSON.parse(saved);
+            } catch(e) { contacts = []; }
+        }
+        renderContacts();
+    }
+    
+    function saveContacts() {
+        localStorage.setItem('momin_contacts', JSON.stringify(contacts));
+        renderContacts();
+    }
+    
+    function addContact(name, id) {
+        if (!name || !id) return false;
+        if (contacts.find(c => c.id === id)) {
+            showToast("Contact already exists", 1200);
+            return false;
+        }
+        contacts.push({ name: name.trim(), id: id.toString() });
+        saveContacts();
+        showToast("Contact saved!", 1000);
+        return true;
+    }
+    
+    function deleteContact(index) {
+        contacts.splice(index, 1);
+        saveContacts();
+        showToast("Contact removed", 1000);
+    }
+    
+    function renderContacts() {
+        const container = document.getElementById('contactsList');
+        if (!container) return;
+        
+        if (contacts.length === 0) {
+            container.innerHTML = '<div class="small-text">No contacts saved yet</div>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        contacts.forEach((contact, idx) => {
+            const div = document.createElement('div');
+            div.className = 'contact-item';
+            div.innerHTML = `
+                <div style="flex:1" onclick="window.selectContact('${contact.id}')">
+                    <div class="contact-name">${escapeHtml(contact.name)}</div>
+                    <div class="contact-id">ID: ${contact.id}</div>
+                </div>
+                <button class="delete-contact" onclick="window.deleteContact(${idx})">Delete</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+    
+    function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+    
+    window.selectContact = function(id) {
+        document.getElementById('targetId').value = id;
+        showToast(`Selected: ${id}`, 1000);
+    };
+    
+    window.deleteContact = function(idx) {
+        deleteContact(idx);
+    };
+    
+    // ---------- PROFESSIONAL RINGTONE (Crescendo Effect) ----------
+    function startIncomingRingtone() {
+        stopAllSounds();
         
         ringVolume = 0.08;
         
-        try {
-            ringtone = new Audio('https://actions.google.com/sound/bar/office-phone-ringtone.mp3');
-            if (!ringtone.canPlayType('audio/mpeg')) {
-                ringtone = new Audio('https://www.soundjay.com/phone/phone-ringtone-1.mp3');
-            }
-        } catch(e) {
-            try {
-                ringtone = new Audio('https://www.ringtone-mania.com/wp-content/uploads/Classic-Phone-Ringtone.mp3');
-            } catch(e2) {
-                ringtone = new Audio('data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtU291bmRib3h0U29mdHdhcmUgVjIuMi4yNKqqqgAADG5lbHNlAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD/');
-            }
-        }
+        const ringUrls = [
+            'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+            'https://www.ringtone-mania.com/demo/iphone-classic-ringtone.mp3'
+        ];
         
+        ringtone = new Audio(ringUrls[0]);
         ringtone.loop = true;
         ringtone.volume = ringVolume;
         
         ringtone.play().catch(e => {
-            console.log("Ringtone autoplay blocked, using fallback");
-            const fallbackRing = new Audio('https://www.ringtone-mania.com/demo/iphone-classic-ringtone.mp3');
-            fallbackRing.loop = true;
-            fallbackRing.volume = ringVolume;
-            fallbackRing.play().catch(e2 => console.log);
-            ringtone = fallbackRing;
+            ringtone = new Audio(ringUrls[1]);
+            ringtone.loop = true;
+            ringtone.volume = ringVolume;
+            ringtone.play().catch(e2 => console.log("Ringtone blocked"));
         });
         
         ringtoneInterval = setInterval(() => {
@@ -241,18 +373,34 @@
                 ringVolume += 0.025;
                 ringtone.volume = Math.min(ringVolume, 0.55);
             }
-        }, 380);
+        }, 400);
     }
     
-    function stopRingtone() {
-        if (ringtoneInterval) {
-            clearInterval(ringtoneInterval);
-            ringtoneInterval = null;
+    function startOutgoingRingback() {
+        stopAllSounds();
+        
+        let ringVol = 0.15;
+        outgoingRingback = new Audio('https://www.soundjay.com/phone/phone-ringing-01.mp3');
+        if (!outgoingRingback.canPlayType('audio/mpeg')) {
+            outgoingRingback = new Audio('https://www.ringtone-mania.com/demo/classic-phone-ringtone.mp3');
         }
-        if (ringtone) {
-            ringtone.pause();
-            ringtone = null;
-        }
+        outgoingRingback.loop = true;
+        outgoingRingback.volume = ringVol;
+        outgoingRingback.play().catch(e => console.log("Ringback play error"));
+        
+        outgoingRingInterval = setInterval(() => {
+            if (outgoingRingback && ringVol < 0.45) {
+                ringVol += 0.02;
+                outgoingRingback.volume = Math.min(ringVol, 0.45);
+            }
+        }, 500);
+    }
+    
+    function stopAllSounds() {
+        if (ringtoneInterval) { clearInterval(ringtoneInterval); ringtoneInterval = null; }
+        if (outgoingRingInterval) { clearInterval(outgoingRingInterval); outgoingRingInterval = null; }
+        if (ringtone) { ringtone.pause(); ringtone = null; }
+        if (outgoingRingback) { outgoingRingback.pause(); outgoingRingback = null; }
         ringVolume = 0.1;
     }
 
@@ -272,7 +420,6 @@
         const container = document.getElementById('callManager');
         if (!container) return;
 
-        // Incoming call waiting
         if (pendingIncoming && !isInCall) {
             container.innerHTML = `
                 <div class="incoming-card">
@@ -289,7 +436,6 @@
             return;
         }
 
-        // Active call UI with HANG UP button
         if (isInCall && currentCall) {
             container.innerHTML = `
                 <div class="active-call-box">
@@ -302,13 +448,11 @@
             return;
         }
 
-        // No calls
         container.innerHTML = `<div style="text-align:center; padding:16px; opacity:0.6;">No active call</div>`;
     }
 
-    // HANGUP: close everything
     async function hangupCall(showMsg = true) {
-        stopRingtone();
+        stopAllSounds();
         
         if (currentCall) {
             try { currentCall.close(); } catch(e) {}
@@ -322,16 +466,15 @@
         isInCall = false;
         pendingIncoming = null;
         updateUI();
-        document.getElementById('connectionStatus').innerHTML = "Online • Ready for calls";
+        document.getElementById('connectionStatus').innerHTML = "Online • Ready";
         if (showMsg) showToast("Call ended", 1200);
     }
 
-    // Accept incoming call
     async function acceptCall() {
         if (!pendingIncoming) return;
         const callObj = pendingIncoming.call;
         
-        stopRingtone();
+        stopAllSounds();
         
         if (!localStream) {
             try {
@@ -381,13 +524,12 @@
             try { pendingIncoming.call.close(); } catch(e) {}
             pendingIncoming = null;
         }
-        stopRingtone();
+        stopAllSounds();
         updateUI();
         showToast("Call rejected", 1200);
         document.getElementById('connectionStatus').innerHTML = "Online • Ready";
     }
 
-    // Outgoing call
     async function makeCall(remoteNumericId) {
         if (!remoteNumericId || remoteNumericId === myNumber) {
             showToast("Invalid ID or cannot call yourself", 1500);
@@ -405,12 +547,17 @@
                 return;
             }
         }
+        
+        // Start ringback tone for caller
+        startOutgoingRingback();
+        
         const targetPeerId = 'momin_' + remoteNumericId;
         document.getElementById('connectionStatus').innerHTML = "Calling...";
         const call = peer.call(targetPeerId, localStream);
         currentCall = call;
         
         call.on('stream', (remoteStream) => {
+            stopAllSounds();
             if (remoteAudio) {
                 remoteAudio.pause();
                 remoteAudio.srcObject = null;
@@ -425,25 +572,27 @@
             showToast("Call started!");
         });
         call.on('close', () => {
+            stopAllSounds();
             hangupCall(false);
             showToast("Call ended", 1300);
         });
         call.on('error', (err) => {
             console.warn(err);
+            stopAllSounds();
             hangupCall(true);
             showToast("Call failed: person offline", 2000);
         });
         updateUI();
-        // timeout 30 sec
+        
         setTimeout(() => {
             if (currentCall && !isInCall) {
+                stopAllSounds();
                 showToast("No answer, timeout", 1800);
                 hangupCall(false);
             }
         }, 30000);
     }
 
-    // ---------- PEERJS INIT ----------
     function initPeer() {
         peer = new Peer(fullPeerId, {
             debug: 2,
@@ -451,107 +600,4 @@
         });
         
         peer.on('open', (id) => {
-            document.getElementById('myIdDisplay').innerText = myNumber;
-            document.getElementById('connectionStatus').innerHTML = "Online • Ready for calls";
-            showToast("Your ID: " + myNumber, 2500);
-        });
-        
-        peer.on('call', (incomingCall) => {
-            if (isInCall) {
-                incomingCall.close();
-                showToast("Busy, cannot answer", 1200);
-                return;
-            }
-            if (pendingIncoming) {
-                incomingCall.close();
-                return;
-            }
-            const callerFull = incomingCall.peer;
-            const callerNumber = callerFull.replace('momin_', '');
-            
-            // Start professional ringtone with crescendo
-            startProfessionalRingtone();
-            
-            if ('vibrate' in navigator) navigator.vibrate([300, 150, 300]);
-            
-            pendingIncoming = {
-                call: incomingCall,
-                callerId: callerNumber
-            };
-            updateUI();
-            document.getElementById('connectionStatus').innerHTML = "Incoming call!";
-            showToast(`Call from ${callerNumber}`, 4000);
-        });
-        
-        peer.on('error', (err) => {
-            console.error("Peer error", err);
-            document.getElementById('connectionStatus').innerHTML = "Connection issue";
-        });
-    }
-
-    // ---------- FCM PUSH for background/closed app ----------
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('firebase-messaging-sw.js')
-            .then((reg) => {
-                messaging.useServiceWorker(reg);
-                Notification.requestPermission().then(perm => {
-                    if (perm === 'granted') {
-                        messaging.getToken({ vapidKey: 'BN0xZkQKtNvMG64UWV2p4YtWONV5NQ-6T2VzPHWr6X0W8LwzjN5y1T97JkYq3VXwFpZQxIfj7G2fA3sD4fG5hJ6kL' })
-                            .then(token => console.log("FCM token:", token))
-                            .catch(e => console.warn);
-                    }
-                });
-            });
-    }
-    
-    messaging.onMessage((payload) => {
-        if (payload.data && payload.data.type === 'call_alert') {
-            if (!pendingIncoming && !isInCall) {
-                showToast(`Incoming call from ${payload.data.caller || 'friend'}`, 4000);
-                if (!ringtone) {
-                    startProfessionalRingtone();
-                    setTimeout(() => { if(ringtone) stopRingtone(); }, 25000);
-                }
-            }
-        }
-    });
-
-    // User ID (persistent)
-    let myNumber = localStorage.getItem('momin_permanent_id');
-    if (!myNumber) {
-        myNumber = Math.floor(1000 + Math.random() * 9000).toString();
-        localStorage.setItem('momin_permanent_id', myNumber);
-    }
-    const fullPeerId = 'momin_' + myNumber;
-
-    // ---- Event Listeners ----
-    document.getElementById('startCallBtn')?.addEventListener('click', async () => {
-        const target = document.getElementById('targetId').value.trim();
-        if (!target) {
-            showToast("Enter friend's ID", 1200);
-            return;
-        }
-        if (!localStream) {
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            } catch(e) {
-                showToast("Microphone access needed", 1800);
-                return;
-            }
-        }
-        makeCall(target);
-    });
-
-    // Cleanup on page unload
-    window.addEventListener('beforeunload', () => {
-        if (currentCall) currentCall.close();
-        if (localStream) localStream.getTracks().forEach(track => track.stop());
-        stopRingtone();
-    });
-
-    // Start everything
-    initPeer();
-    updateUI();
-</script>
-</body>
-    </html>
+            document.getElementById('myIdDisplay').innerText = 
