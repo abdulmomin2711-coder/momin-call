@@ -1,5 +1,5 @@
-importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js');
-importScripts('https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js');
+importScripts('https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-compat.js');
 
 firebase.initializeApp({
   apiKey: "AIzaSyBb37fIJwYNKFDLmg9BS_rnFE4SIFx5JYE",
@@ -13,12 +13,12 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage((payload) => {
-  const notificationTitle = payload.data?.title || '📞 ভয়েস কল আসছে';
-  const notificationOptions = {
-    body: payload.data?.body || 'মমিন কল অ্যাপে রিসিভ করুন',
+  const title = payload.data?.title || 'Incoming Voice Call';
+  const options = {
+    body: payload.data?.body || 'Someone is calling you on Momin Call',
     icon: 'https://via.placeholder.com/192x192?text=Momin',
     vibrate: [300, 100, 300],
-    sound: 'default'
+    requireInteraction: true
   };
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  self.registration.showNotification(title, options);
 });
