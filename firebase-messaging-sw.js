@@ -15,7 +15,7 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   const title = payload.data?.title || 'Incoming Voice Call';
   const options = {
-    body: payload.data?.body || 'Someone is calling you',
+    body: payload.data?.body || 'Someone is calling you on Momin Call',
     icon: 'https://via.placeholder.com/192x192?text=Momin',
     vibrate: [300, 100, 300],
     requireInteraction: true
