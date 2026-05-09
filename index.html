@@ -1,198 +1,188 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Momin Voice Call - ইমো স্টাইল</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Momin Voice Call - Live Audio Call</title>
     <link rel="manifest" href="manifest.json">
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-messaging.js"></script>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-messaging-compat.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         }
         body {
-            background: linear-gradient(145deg, #0a0f1e 0%, #0c1122 100%);
+            background: #0c0f1c;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 16px;
         }
-        .container {
-            max-width: 500px;
+        .app {
+            max-width: 480px;
             width: 100%;
             margin: auto;
         }
         .card {
-            background: rgba(18, 25, 45, 0.95);
-            backdrop-filter: blur(12px);
-            border-radius: 40px;
-            padding: 28px 22px;
-            margin-bottom: 22px;
-            border: 1px solid rgba(0, 255, 136, 0.25);
-            box-shadow: 0 20px 35px -12px rgba(0,0,0,0.6);
-            transition: all 0.2s;
+            background: #131725;
+            border-radius: 32px;
+            padding: 24px 20px;
+            margin-bottom: 20px;
+            border: 1px solid #2a2f45;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
         }
         .badge {
-            font-size: 13px;
-            letter-spacing: 1.5px;
-            text-transform: uppercase;
-            color: #8e9bbe;
+            font-size: 12px;
             font-weight: 600;
-            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7e8aa8;
+            margin-bottom: 10px;
         }
-        .id-wrapper {
-            background: #00000055;
+        .id-box {
+            background: #0a0e18;
             border-radius: 60px;
-            padding: 10px 20px;
+            padding: 12px 20px;
             display: inline-block;
-            margin: 12px 0;
-            border: 1px solid #2a6e3a;
+            margin: 10px 0;
+            border: 1px solid #2e8b57;
         }
-        .my-id {
-            font-size: 40px;
+        .id-number {
+            font-size: 38px;
             font-weight: 800;
             font-family: monospace;
-            color: #00ff9d;
-            text-shadow: 0 0 8px #00aa55;
-            letter-spacing: 3px;
+            color: #2ecc71;
+            letter-spacing: 2px;
         }
-        .sub-text {
-            font-size: 13px;
-            color: #a7b4d4;
-            margin: 8px 0;
-        }
-        .status-chip {
-            background: #0f1422;
+        .status {
+            background: #0e1322;
             padding: 6px 16px;
-            border-radius: 50px;
-            display: inline-block;
+            border-radius: 40px;
             font-size: 13px;
             font-weight: 500;
+            display: inline-block;
             margin-top: 8px;
         }
         input {
             width: 100%;
-            padding: 16px 20px;
-            font-size: 18px;
-            background: #0b1020;
-            border: 1.5px solid #2a2f48;
+            padding: 15px 18px;
+            font-size: 17px;
+            background: #0e1322;
+            border: 1.5px solid #2a3048;
             border-radius: 60px;
             color: white;
             text-align: center;
-            font-weight: 500;
             outline: none;
-            transition: 0.2s;
         }
         input:focus {
-            border-color: #00ff9d;
-            box-shadow: 0 0 12px #00ff9d33;
+            border-color: #2ecc71;
         }
-        .btn {
+        button {
             width: 100%;
-            padding: 15px;
+            padding: 14px;
             border-radius: 60px;
-            font-weight: bold;
-            font-size: 18px;
+            font-weight: 700;
+            font-size: 17px;
             border: none;
-            background: #242a44;
-            color: white;
             cursor: pointer;
             transition: 0.2s;
             margin-top: 14px;
         }
         .btn-call {
-            background: linear-gradient(95deg, #00d26a, #00ff9d);
-            color: #000;
-            font-weight: 800;
-            box-shadow: 0 6px 14px rgba(0, 210, 106, 0.3);
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 12px rgba(46,204,113,0.3);
         }
         .btn-danger {
-            background: #de3c4b;
+            background: #e74c3c;
             color: white;
         }
         .btn-secondary {
-            background: #1e2a3a;
+            background: #2c3e50;
+            color: white;
         }
-        .incoming-box {
-            background: #2a1f2e;
-            border-radius: 36px;
+        .incoming-card {
+            background: #1e1a2f;
+            border-radius: 28px;
             padding: 20px;
-            margin-top: 10px;
-            animation: ringPulse 1.1s infinite;
-            border-left: 5px solid #ffb347;
+            margin: 12px 0;
+            animation: pulse-ring 1s infinite;
+            border-left: 4px solid #f39c12;
         }
-        @keyframes ringPulse {
-            0% { box-shadow: 0 0 0 0 rgba(255, 170, 70, 0.5); }
-            70% { box-shadow: 0 0 0 18px rgba(255, 170, 70, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(255, 170, 70, 0); }
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(243,156,18,0.5); }
+            70% { box-shadow: 0 0 0 15px rgba(243,156,18,0); }
+            100% { box-shadow: 0 0 0 0 rgba(243,156,18,0); }
         }
-        .flex-two {
+        .flex-row {
             display: flex;
-            gap: 14px;
-            margin-top: 18px;
+            gap: 12px;
+            margin-top: 16px;
         }
-        .flex-two .btn {
+        .flex-row button {
             margin-top: 0;
         }
-        .call-active-panel {
-            background: #102a1a;
-            border-radius: 38px;
+        .active-call-box {
+            background: #0f2a1a;
+            border-radius: 32px;
             padding: 20px;
             text-align: center;
-            border: 1px solid #3eff9e;
+            border: 1px solid #2ecc71;
         }
         .hidden {
             display: none;
         }
-        .toast {
+        .toast-msg {
             position: fixed;
-            bottom: 30px;
+            bottom: 25px;
             left: 20px;
             right: 20px;
-            background: #1e293be6;
+            background: #1e2438e6;
             backdrop-filter: blur(12px);
-            border-radius: 100px;
+            border-radius: 60px;
             padding: 12px 20px;
             text-align: center;
             font-size: 14px;
             font-weight: 500;
             z-index: 1000;
-            border-left: 4px solid #00ff9d;
         }
         button:active { transform: scale(0.97); }
+        .hangup-btn {
+            background: #e74c3c;
+            margin-top: 16px;
+        }
     </style>
 </head>
 <body>
-<div class="container">
-    <!-- নিজের আইডি কার্ড -->
+<div class="app">
+    <!-- Your ID Card -->
     <div class="card">
-        <div class="badge">📡 তোমার কলিং আইডি</div>
-        <div class="id-wrapper">
-            <span class="my-id" id="displayMyId">----</span>
+        <div class="badge">📞 YOUR CALLER ID</div>
+        <div class="id-box">
+            <span class="id-number" id="myIdDisplay">----</span>
         </div>
-        <div class="sub-text">✨ বন্ধুকে এই আইডি দাও, কল করতে পারবে</div>
-        <div class="status-chip" id="globalStatus">🟢 অনলাইন • কলের জন্য প্রস্তুত</div>
+        <div class="status" id="connectionStatus">🟢 Online • Ready</div>
     </div>
 
-    <!-- কল করার সেকশন -->
+    <!-- Call Section -->
     <div class="card">
-        <div class="badge">📞 বন্ধুকে কল দাও</div>
-        <input type="number" id="friendIdInput" placeholder="বন্ধুর নাম্বার আইডি লিখুন" autocomplete="off">
-        <button class="btn btn-call" id="callBtn">🔊 ভয়েস কল শুরু করুন</button>
+        <div class="badge">📱 CALL A FRIEND</div>
+        <input type="number" id="targetId" placeholder="Enter friend's numeric ID" autocomplete="off">
+        <button class="btn-call" id="startCallBtn">🔊 START VOICE CALL</button>
     </div>
 
-    <!-- কল ম্যানেজমেন্ট এরিয়া (ইনকামিং / এক্টিভ কল) -->
-    <div id="callArea"></div>
+    <!-- Dynamic Call Area (incoming / active call) -->
+    <div id="callManager"></div>
 </div>
 
 <script>
-    // ------------------- FIREBASE কনফিগ (আপনার প্রোজেক্ট) ------------------
+    // ---------- FIREBASE ----------
     const firebaseConfig = {
         apiKey: "AIzaSyBb37fIJwYNKFDLmg9BS_rnFE4SIFx5JYE",
         authDomain: "momincall-c3359.firebaseapp.com",
@@ -204,171 +194,180 @@
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
 
-    // ------------------- গ্লোবাল ভেরিয়েবল ------------------
+    // ---------- GLOBAL VARIABLES ----------
     let peer = null;
-    let myStream = null;          // নিজের মাইক্রোফোন
-    let activeCall = null;        // এক্টিভ PeerJS কল অবজেক্ট
-    let remoteAudio = null;       // রিমোট সাউন্ড প্লেয়ার
-    let isCallActive = false;
-    let incomingCallData = null;   // ইনকামিং কল সংরক্ষণ
-    let ringTone = null;
+    let localStream = null;
+    let currentCall = null;        // active PeerJS call
+    let remoteAudio = null;        // audio element for remote stream
+    let isInCall = false;
+    let pendingIncoming = null;     // { call, callerId }
+    let ringtone = null;
 
-    // ইউজার আইডি (পার্মানেন্ট)
-    let myNumber = localStorage.getItem('momin_call_id');
+    // User ID (persistent)
+    let myNumber = localStorage.getItem('momin_permanent_id');
     if (!myNumber) {
         myNumber = Math.floor(1000 + Math.random() * 9000).toString();
-        localStorage.setItem('momin_call_id', myNumber);
+        localStorage.setItem('momin_permanent_id', myNumber);
     }
-    const fullPeerId = `momin_${myNumber}`;
+    const fullPeerId = 'momin_' + myNumber;
 
-    // টোস্ট মেসেজ ফাংশন
-    function showMessage(msg, duration = 2700) {
-        let oldToast = document.querySelector('.toast');
-        if(oldToast) oldToast.remove();
-        let toastDiv = document.createElement('div');
-        toastDiv.className = 'toast';
-        toastDiv.innerText = msg;
-        document.body.appendChild(toastDiv);
-        setTimeout(() => toastDiv.remove(), duration);
+    // Helper: toast message
+    function showToast(msg, duration = 2500) {
+        let old = document.querySelector('.toast-msg');
+        if(old) old.remove();
+        let div = document.createElement('div');
+        div.className = 'toast-msg';
+        div.innerText = msg;
+        document.body.appendChild(div);
+        setTimeout(() => div.remove(), duration);
     }
 
-    // কল ক্লিনআপ (হাং আপ)
-    async function endCall(showMsg = true) {
-        if (ringTone) { ringTone.pause(); ringTone = null; }
-        if (activeCall) {
-            try { activeCall.close(); } catch(e) {}
-            activeCall = null;
+    // Update UI based on state
+    function updateUI() {
+        const container = document.getElementById('callManager');
+        if (!container) return;
+
+        // Incoming call waiting
+        if (pendingIncoming && !isInCall) {
+            container.innerHTML = `
+                <div class="incoming-card">
+                    <div class="badge" style="color:#f39c12;">📲 INCOMING CALL</div>
+                    <div style="font-size: 24px; font-weight: bold; margin: 12px 0;">${pendingIncoming.callerId}</div>
+                    <div class="flex-row">
+                        <button id="acceptCallBtn" style="background:#2ecc71; color:white;">✅ ACCEPT</button>
+                        <button id="rejectCallBtn" style="background:#e74c3c; color:white;">❌ REJECT</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('acceptCallBtn')?.addEventListener('click', acceptCall);
+            document.getElementById('rejectCallBtn')?.addEventListener('click', rejectCall);
+            return;
+        }
+
+        // Active call UI with HANGUP button
+        if (isInCall && currentCall) {
+            container.innerHTML = `
+                <div class="active-call-box">
+                    <div class="badge" style="color:#2ecc71;">🎙️ LIVE CALL ACTIVE</div>
+                    <div style="font-size: 20px; margin: 16px 0;">🔊 Voice call in progress</div>
+                    <button id="hangupActiveBtn" class="hangup-btn" style="background:#e74c3c; width:100%; padding:14px; border-radius:60px; font-weight:bold;">⛔ HANG UP</button>
+                </div>
+            `;
+            document.getElementById('hangupActiveBtn')?.addEventListener('click', () => hangupCall(true));
+            return;
+        }
+
+        // No calls
+        container.innerHTML = `<div style="text-align:center; padding:16px; opacity:0.6;">✨ No active call</div>`;
+    }
+
+    // HANGUP: close everything
+    async function hangupCall(showMsg = true) {
+        // stop ringtone
+        if (ringtone) {
+            ringtone.pause();
+            ringtone = null;
+        }
+        if (currentCall) {
+            try { currentCall.close(); } catch(e) {}
+            currentCall = null;
         }
         if (remoteAudio) {
             remoteAudio.pause();
             remoteAudio.srcObject = null;
             remoteAudio = null;
         }
-        isCallActive = false;
-        incomingCallData = null;
-        updateCallInterface();
-        if (showMsg) showMessage("📴 কল শেষ হয়েছে", 1200);
-        document.getElementById('globalStatus').innerHTML = "🟢 রেডি • কল দিতে পারো";
+        isInCall = false;
+        pendingIncoming = null;
+        updateUI();
+        document.getElementById('connectionStatus').innerHTML = "🟢 Online • Ready";
+        if (showMsg) showToast("Call ended", 1200);
     }
 
-    // UI আপডেট (ইনকামিং / এক্টিভ কল)
-    function updateCallInterface() {
-        const area = document.getElementById('callArea');
-        if (!area) return;
+    // Accept incoming call
+    async function acceptCall() {
+        if (!pendingIncoming) return;
+        const callObj = pendingIncoming.call;
+        const caller = pendingIncoming.callerId;
         
-        // যদি ইনকামিং কল থাকে
-        if (incomingCallData && !isCallActive) {
-            area.innerHTML = `
-                <div class="incoming-box">
-                    <div class="badge" style="color:#ffbc6e;">📞 ইনকামিং কল</div>
-                    <div style="font-size: 26px; font-weight: bold; margin: 12px 0;">🔔 ${incomingCallData.callerId}</div>
-                    <div class="flex-two">
-                        <button id="acceptCallBtn" class="btn btn-call" style="background:#00c96b;">✅ রিসিভ করো</button>
-                        <button id="declineCallBtn" class="btn btn-danger" style="background:#a1222a;">❌ রিজেক্ট</button>
-                    </div>
-                </div>
-            `;
-            document.getElementById('acceptCallBtn')?.addEventListener('click', () => acceptIncoming());
-            document.getElementById('declineCallBtn')?.addEventListener('click', () => rejectIncomingCall());
-            return;
-        }
+        if (ringtone) { ringtone.pause(); ringtone = null; }
         
-        // এক্টিভ কল থাকলে
-        if (isCallActive && activeCall) {
-            area.innerHTML = `
-                <div class="call-active-panel">
-                    <div class="badge">🎙️ লাইভ কল চলছে</div>
-                    <div style="font-size: 22px; margin: 12px 0;">🔊 কথা বলছেন</div>
-                    <button id="hangupBtn" class="btn btn-danger" style="background:#c52828;">⛔ কল কেটে দাও</button>
-                </div>
-            `;
-            document.getElementById('hangupBtn')?.addEventListener('click', () => endCall(true));
-            return;
-        }
-        
-        // ডিফল্ট (কোন কল নেই)
-        area.innerHTML = `<div style="text-align:center; padding:15px; opacity:0.6;">✨ কোনো কল নেই</div>`;
-    }
-
-    // ইনকামিং কল অ্যাকসেপ্ট
-    async function acceptIncoming() {
-        if (!incomingCallData) return;
-        const callObj = incomingCallData.call;
-        if (ringTone) { ringTone.pause(); ringTone = null; }
-        
-        if (!myStream) {
+        if (!localStream) {
             try {
-                myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             } catch(err) {
-                showMessage("মাইক্রোফোন অনুমতি দরকার!", 2000);
-                rejectIncomingCall();
+                showToast("Microphone permission required", 2000);
+                rejectCall();
                 return;
             }
         }
         
         try {
-            callObj.answer(myStream);
+            callObj.answer(localStream);
             callObj.on('stream', (remoteStream) => {
                 if (remoteAudio) {
                     remoteAudio.pause();
                     remoteAudio.srcObject = null;
                 }
-                const audioEl = new Audio();
-                audioEl.srcObject = remoteStream;
-                audioEl.autoplay = true;
-                audioEl.play().catch(e => console.warn);
-                remoteAudio = audioEl;
-                isCallActive = true;
-                activeCall = callObj;
-                incomingCallData = null;
-                updateCallInterface();
-                document.getElementById('globalStatus').innerHTML = "📞 কল চলছে...";
-                showMessage("✅ কল সংযোগ হয়েছে", 1200);
+                const audioElem = new Audio();
+                audioElem.srcObject = remoteStream;
+                audioElem.autoplay = true;
+                audioElem.play().catch(e => console.warn);
+                remoteAudio = audioElem;
+                isInCall = true;
+                currentCall = callObj;
+                pendingIncoming = null;
+                updateUI();
+                document.getElementById('connectionStatus').innerHTML = "📞 On a call";
+                showToast("Call connected!");
             });
             callObj.on('close', () => {
-                endCall(false);
-                showMessage("অন্য প্রান্ত থেকে কল কাটা হয়েছে", 1500);
+                hangupCall(false);
+                showToast("Call ended by other person", 1500);
             });
-            callObj.on('error', () => endCall(true));
+            callObj.on('error', (err) => {
+                console.error(err);
+                hangupCall(true);
+            });
         } catch(e) {
-            showMessage("কল রিসিভ করতে ব্যর্থ", 1500);
-            rejectIncomingCall();
+            showToast("Failed to answer", 1500);
+            rejectCall();
         }
     }
     
-    function rejectIncomingCall() {
-        if (incomingCallData) {
-            try { incomingCallData.call.close(); } catch(e) {}
-            incomingCallData = null;
+    function rejectCall() {
+        if (pendingIncoming) {
+            try { pendingIncoming.call.close(); } catch(e) {}
+            pendingIncoming = null;
         }
-        if (ringTone) { ringTone.pause(); ringTone = null; }
-        updateCallInterface();
-        showMessage("📵 কল রিজেক্ট করা হয়েছে", 1200);
-        document.getElementById('globalStatus').innerHTML = "🟢 অনলাইন";
+        if (ringtone) { ringtone.pause(); ringtone = null; }
+        updateUI();
+        showToast("Call rejected", 1200);
+        document.getElementById('connectionStatus').innerHTML = "🟢 Ready";
     }
 
-    // বাইরে কল করার ফাংশন
-    async function startOutgoingCall(remoteNumericId) {
+    // Outgoing call
+    async function makeCall(remoteNumericId) {
         if (!remoteNumericId || remoteNumericId === myNumber) {
-            showMessage("নিজের আইডি ছাড়া বৈধ নম্বর দিন", 1500);
+            showToast("Invalid ID or cannot call yourself", 1500);
             return;
         }
-        if (isCallActive) {
-            showMessage("আগে কল শেষ করুন", 1300);
+        if (isInCall) {
+            showToast("Already in a call. Hang up first.", 1500);
             return;
         }
-        if (!myStream) {
+        if (!localStream) {
             try {
-                myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             } catch(err) {
-                showMessage("মাইক্রোফোন অনুমতি দিন", 1800);
+                showToast("Microphone access is required", 1800);
                 return;
             }
         }
-        const targetPeer = `momin_${remoteNumericId}`;
-        document.getElementById('globalStatus').innerHTML = "📡 কল সংযোগ হচ্ছে...";
-        const call = peer.call(targetPeer, myStream);
-        activeCall = call;
+        const targetPeerId = 'momin_' + remoteNumericId;
+        document.getElementById('connectionStatus').innerHTML = "📡 Calling...";
+        const call = peer.call(targetPeerId, localStream);
+        currentCall = call;
         
         call.on('stream', (remoteStream) => {
             if (remoteAudio) {
@@ -379,77 +378,82 @@
             audioPlayer.srcObject = remoteStream;
             audioPlayer.autoplay = true;
             remoteAudio = audioPlayer;
-            isCallActive = true;
-            updateCallInterface();
-            document.getElementById('globalStatus').innerHTML = "🎙️ কল চলছে";
-            showMessage("কল সংযুক্ত!", 1000);
+            isInCall = true;
+            updateUI();
+            document.getElementById('connectionStatus').innerHTML = "📞 Connected";
+            showToast("Call started!");
         });
         call.on('close', () => {
-            endCall(false);
-            showMessage("কল সংযোগ বিচ্ছিন্ন", 1400);
+            hangupCall(false);
+            showToast("Call ended", 1300);
         });
         call.on('error', (err) => {
-            console.error(err);
-            endCall(true);
-            showMessage("কল ব্যর্থ: ইউজার অফলাইন", 2000);
+            console.warn(err);
+            hangupCall(true);
+            showToast("Call failed: person offline", 2000);
         });
-        updateCallInterface();
-        // 25 সেকেন্ড টাইমআউট
+        updateUI();
+        // timeout 25 sec
         setTimeout(() => {
-            if (activeCall && !isCallActive) {
-                showMessage("কোনো সাড়া নেই", 1500);
-                endCall(false);
+            if (currentCall && !isInCall) {
+                showToast("No answer, timeout", 1800);
+                hangupCall(false);
             }
         }, 25000);
     }
 
-    // ---------- PEERJS ইনিশিয়ালাইজ ----------
-    function initPeerConnection() {
+    // ---------- PEERJS INIT ----------
+    function initPeer() {
         peer = new Peer(fullPeerId, {
             debug: 2,
             config: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] }
         });
-        peer.on('open', () => {
-            document.getElementById('displayMyId').innerText = myNumber;
-            document.getElementById('globalStatus').innerHTML = "🟢 অনলাইন • কল নিতে প্রস্তুত";
-            showMessage(`তোমার আইডি: ${myNumber}`, 2500);
+        
+        peer.on('open', (id) => {
+            document.getElementById('myIdDisplay').innerText = myNumber;
+            document.getElementById('connectionStatus').innerHTML = "🟢 Ready for calls";
+            showToast("Your ID: " + myNumber, 2500);
         });
-        peer.on('call', (incoming) => {
-            if (isCallActive) {
-                incoming.close();
-                showMessage("ব্যস্ত, কল নেয়া যাচ্ছে না", 1200);
+        
+        peer.on('call', (incomingCall) => {
+            if (isInCall) {
+                incomingCall.close();
+                showToast("Busy, cannot answer", 1200);
                 return;
             }
-            const callerFullId = incoming.peer;
-            const callerNumber = callerFullId.replace('momin_', '');
-            if (incomingCallData) {
-                incoming.close();
+            if (pendingIncoming) {
+                incomingCall.close();
                 return;
             }
-            // রিং সাউন্ড
-            if (ringTone) ringTone.pause();
+            const callerFull = incomingCall.peer;
+            const callerNumber = callerFull.replace('momin_', '');
+            
+            // Play ringtone
+            if (ringtone) ringtone.pause();
             try {
-                ringTone = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
-                ringTone.loop = true;
-                ringTone.volume = 0.45;
-                ringTone.play().catch(e => console.log);
+                ringtone = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3');
+                ringtone.loop = true;
+                ringtone.volume = 0.4;
+                ringtone.play().catch(e => console.log);
             } catch(e) {}
             if ('vibrate' in navigator) navigator.vibrate(400);
-            incomingCallData = {
-                call: incoming,
+            
+            pendingIncoming = {
+                call: incomingCall,
                 callerId: callerNumber
             };
-            updateCallInterface();
-            document.getElementById('globalStatus').innerHTML = "🔔 ইনকামিং কল! রিসিভ করো";
-            showMessage(`📞 কল আসছে ${callerNumber} থেকে`, 4000);
+            updateUI();
+            document.getElementById('connectionStatus').innerHTML = "🔔 Incoming call!";
+            showToast(`Call from ${callerNumber}`, 4000);
         });
+        
         peer.on('error', (err) => {
-            console.warn(err);
-            document.getElementById('globalStatus').innerHTML = "⚠️ সংযোগ সমস্যা";
+            console.error("Peer error", err);
+            document.getElementById('connectionStatus').innerHTML = "⚠️ Connection issue";
         });
     }
 
-    // ---------- FCM ও পুশ নোটিফিকেশন (অ্যাপ বন্ধ থাকলেও রিং) ----------
+    // ---------- FCM PUSH for background/closed app ----------
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('firebase-messaging-sw.js')
             .then((reg) => {
@@ -457,52 +461,57 @@
                 Notification.requestPermission().then(perm => {
                     if (perm === 'granted') {
                         messaging.getToken({ vapidKey: 'BN0xZkQKtNvMG64UWV2p4YtWONV5NQ-6T2VzPHWr6X0W8LwzjN5y1T97JkYq3VXwFpZQxIfj7G2fA3sD4fG5hJ6kL' })
-                            .then(token => localStorage.setItem('fcm_token', token))
-                            .catch(e=>console.warn);
+                            .then(token => console.log("FCM token:", token))
+                            .catch(e => console.warn);
                     }
                 });
             });
     }
-    // ফোরগ্রাউন্ড মেসেজ লিসেন
+    
     messaging.onMessage((payload) => {
-        if(payload.data && payload.data.type === 'call_request') {
-            if (!incomingCallData && !isCallActive) {
-                showMessage(`📣 কল আসছে ${payload.data.caller_id || 'বন্ধু'} থেকে`, 4000);
-                if(!ringTone){
-                    let r = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3');
-                    r.loop = true; r.volume = 0.3; r.play().catch(e=>{});
-                    ringTone = r;
-                    setTimeout(()=>{ if(ringTone===r){ r.pause(); ringTone=null;}}, 20000);
+        if (payload.data && payload.data.type === 'call_alert') {
+            if (!pendingIncoming && !isInCall) {
+                showToast(`🔔 Incoming call from ${payload.data.caller || 'friend'}`, 4000);
+                if (!ringtone) {
+                    let r = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+                    r.loop = true;
+                    r.volume = 0.3;
+                    r.play().catch(e=>{});
+                    ringtone = r;
+                    setTimeout(() => { if(ringtone === r) { r.pause(); ringtone = null; } }, 20000);
                 }
             }
         }
     });
 
-    // UI বাটন ইভেন্ট
-    document.getElementById('callBtn')?.addEventListener('click', async () => {
-        const friendId = document.getElementById('friendIdInput').value.trim();
-        if (!friendId) { showMessage("বন্ধুর আইডি লিখুন", 1200); return; }
-        if (!myStream) {
+    // ---- Event Listeners ----
+    document.getElementById('startCallBtn')?.addEventListener('click', async () => {
+        const target = document.getElementById('targetId').value.trim();
+        if (!target) {
+            showToast("Enter friend's ID", 1200);
+            return;
+        }
+        if (!localStream) {
             try {
-                myStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             } catch(e) {
-                showMessage("মাইক্রোফোন এক্সেস দিন", 2000);
+                showToast("Microphone access needed", 1800);
                 return;
             }
         }
-        startOutgoingCall(friendId);
+        makeCall(target);
     });
 
-    // ক্লিনআপ
+    // Cleanup on page unload
     window.addEventListener('beforeunload', () => {
-        if (activeCall) activeCall.close();
-        if (myStream) myStream.getTracks().forEach(t => t.stop());
-        if (ringTone) ringTone.pause();
+        if (currentCall) currentCall.close();
+        if (localStream) localStream.getTracks().forEach(track => track.stop());
+        if (ringtone) ringtone.pause();
     });
 
-    initPeerConnection();
-    updateCallInterface();
-    console.log("মমিন ভয়েস কল প্রস্তুত - ইমো স্টাইল");
+    // Start everything
+    initPeer();
+    updateUI();
 </script>
 </body>
     </html>
