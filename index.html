@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Momin Voice Call - Save Contacts</title>
+    <title>Momin Voice Call - Professional</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -210,6 +210,10 @@
             margin-top: 8px;
             text-align: center;
         }
+        .loading {
+            color: #f39c12;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -220,7 +224,7 @@
         <div class="id-box">
             <span class="id-number" id="myIdDisplay">----</span>
         </div>
-        <div class="status" id="connectionStatus">Online • Ready</div>
+        <div class="status" id="connectionStatus">Connecting...</div>
     </div>
 
     <!-- CALL A FRIEND Card -->
@@ -250,7 +254,7 @@
 </div>
 
 <script>
-    // Firebase Config
+    // ========== FIREBASE CONFIG ==========
     const firebaseConfig = {
         apiKey: "AIzaSyBb37fIJwYNKFDLmg9BS_rnFE4SIFx5JYE",
         authDomain: "momincall-c3359.firebaseapp.com",
@@ -262,7 +266,7 @@
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
 
-    // Global Variables
+    // ========== GLOBAL VARIABLES ==========
     let peer = null;
     let localStream = null;
     let currentCall = null;
@@ -275,7 +279,7 @@
     let outgoingRingback = null;
     let outgoingRingInterval = null;
 
-    // User ID (persistent)
+    // ========== USER ID (Simple 4-5 digit number) ==========
     let myNumber = localStorage.getItem('momin_permanent_id');
     if (!myNumber) {
         myNumber = Math.floor(1000 + Math.random() * 9000).toString();
@@ -422,7 +426,7 @@
         ringVolume = 0.1;
     }
 
-    // Helper Functions
+    // ========== HELPER FUNCTIONS ==========
     function showToast(msg, duration = 2500) {
         let old = document.querySelector('.toast-msg');
         if(old) old.remove();
@@ -556,6 +560,10 @@
             showToast("Already in a call. Hang up first.", 1500);
             return;
         }
+        if (!peer || peer.disconnected) {
+            showToast("Connection issue, please wait...", 1500);
+            return;
+        }
         if (!localStream) {
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -569,41 +577,29 @@
         
         const targetPeerId = 'momin_' + remoteNumericId;
         document.getElementById('connectionStatus').innerHTML = "Calling...";
-        const call = peer.call(targetPeerId, localStream);
-        currentCall = call;
         
-        call.on('stream', (remoteStream) => {
-            stopAllSounds();
-            if (remoteAudio) {
-                remoteAudio.pause();
-                remoteAudio.srcObject = null;
-            }
-            const audioPlayer = new Audio();
-            audioPlayer.srcObject = remoteStream;
-            audioPlayer.autoplay = true;
-            remoteAudio = audioPlayer;
-            isInCall = true;
-            updateUI();
-            document.getElementById('connectionStatus').innerHTML = "Connected";
-            showToast("Call started!");
-        });
-        call.on('close', () => {
-            stopAllSounds();
-            hangupCall(false);
-            showToast("Call ended", 1300);
-        });
-        call.on('error', (err) => {
-            console.warn(err);
-            stopAllSounds();
-            hangupCall(true);
-            showToast("Call failed: person offline", 2000);
-        });
-        updateUI();
-        
-        setTimeout(() => {
-            if (currentCall && !isInCall) {
+        try {
+            const call = peer.call(targetPeerId, localStream);
+            currentCall = call;
+            
+            call.on('stream', (remoteStream) => {
                 stopAllSounds();
-                showToast("No answer, timeout", 1800);
+                if (remoteAudio) {
+                    remoteAudio.pause();
+                    remoteAudio.srcObject = null;
+                }
+                const audioPlayer = new Audio();
+                audioPlayer.srcObject = remoteStream;
+                audioPlayer.autoplay = true;
+                remoteAudio = audioPlayer;
+                isInCall = true;
+                updateUI();
+                document.getElementById('connectionStatus').innerHTML = "Connected";
+                showToast("Call started!");
+            });
+            call.on('close', () => {
+                stopAllSounds();
                 hangupCall(false);
-            }
-  
+                showToast("Call ended", 1300);
+            });
+    
