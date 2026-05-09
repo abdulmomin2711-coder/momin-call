@@ -68,7 +68,7 @@
             display: inline-block;
             margin-top: 6px;
         }
-        input, .contact-input {
+        input {
             width: 100%;
             padding: 14px 16px;
             font-size: 16px;
@@ -81,6 +81,21 @@
         }
         input:focus {
             border-color: #2ecc71;
+        }
+        .contact-input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .contact-input-group input:first-child {
+            width: 40%;
+            text-align: left;
+            padding-left: 15px;
+        }
+        .contact-input-group input:last-child {
+            width: 60%;
+            text-align: left;
+            padding-left: 15px;
         }
         button {
             width: 100%;
@@ -101,10 +116,6 @@
         }
         .btn-danger {
             background: #e74c3c;
-            color: white;
-        }
-        .btn-secondary {
-            background: #2c3e50;
             color: white;
         }
         .btn-save {
@@ -165,7 +176,7 @@
             color: #2ecc71;
         }
         .contact-id {
-            font-size: 12px;
+            font-size: 11px;
             color: #8e9bbe;
             font-family: monospace;
         }
@@ -193,10 +204,6 @@
             z-index: 1000;
         }
         button:active { transform: scale(0.97); }
-        .hangup-btn {
-            background: #e74c3c;
-            margin-top: 14px;
-        }
         .small-text {
             font-size: 11px;
             color: #6c7a9e;
@@ -207,7 +214,7 @@
 </head>
 <body>
 <div class="app">
-    <!-- Your ID Card -->
+    <!-- YOUR CALLER ID Card -->
     <div class="card">
         <div class="badge">YOUR CALLER ID</div>
         <div class="id-box">
@@ -216,19 +223,19 @@
         <div class="status" id="connectionStatus">Online • Ready</div>
     </div>
 
-    <!-- Call Section -->
+    <!-- CALL A FRIEND Card -->
     <div class="card">
         <div class="badge">CALL A FRIEND</div>
         <input type="number" id="targetId" placeholder="Enter friend's numeric ID" autocomplete="off">
         <button class="btn-call" id="startCallBtn">START VOICE CALL</button>
     </div>
 
-    <!-- Save Contact Section -->
+    <!-- SAVE CONTACT Card -->
     <div class="card">
         <div class="badge">SAVE CONTACT</div>
-        <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-            <input type="text" id="contactName" placeholder="Friend's name" style="width: 45%; text-align: left; padding-left: 15px;">
-            <input type="number" id="contactId" placeholder="ID number" style="width: 55%; text-align: left; padding-left: 15px;">
+        <div class="contact-input-group">
+            <input type="text" id="contactName" placeholder="Friend's name">
+            <input type="number" id="contactId" placeholder="ID number">
         </div>
         <button class="btn-save" id="saveContactBtn">SAVE CONTACT</button>
         
@@ -243,7 +250,7 @@
 </div>
 
 <script>
-    // ---------- FIREBASE ----------
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyBb37fIJwYNKFDLmg9BS_rnFE4SIFx5JYE",
         authDomain: "momincall-c3359.firebaseapp.com",
@@ -255,7 +262,7 @@
     firebase.initializeApp(firebaseConfig);
     const messaging = firebase.messaging();
 
-    // ---------- GLOBAL VARIABLES ----------
+    // Global Variables
     let peer = null;
     let localStream = null;
     let currentCall = null;
@@ -268,7 +275,15 @@
     let outgoingRingback = null;
     let outgoingRingInterval = null;
 
-    // ---------- CONTACTS MANAGEMENT ----------
+    // User ID (persistent)
+    let myNumber = localStorage.getItem('momin_permanent_id');
+    if (!myNumber) {
+        myNumber = Math.floor(1000 + Math.random() * 9000).toString();
+        localStorage.setItem('momin_permanent_id', myNumber);
+    }
+    const fullPeerId = 'momin_' + myNumber;
+
+    // ========== CONTACTS MANAGEMENT ==========
     let contacts = [];
     
     function loadContacts() {
@@ -287,7 +302,10 @@
     }
     
     function addContact(name, id) {
-        if (!name || !id) return false;
+        if (!name || !id) {
+            showToast("Enter both name and ID", 1200);
+            return false;
+        }
         if (contacts.find(c => c.id === id)) {
             showToast("Contact already exists", 1200);
             return false;
@@ -339,14 +357,14 @@
     
     window.selectContact = function(id) {
         document.getElementById('targetId').value = id;
-        showToast(`Selected: ${id}`, 1000);
+        showToast("Selected: " + id, 1000);
     };
     
     window.deleteContact = function(idx) {
         deleteContact(idx);
     };
-    
-    // ---------- PROFESSIONAL RINGTONE (Crescendo Effect) ----------
+
+    // ========== RINGTONE FUNCTIONS ==========
     function startIncomingRingtone() {
         stopAllSounds();
         
@@ -365,7 +383,7 @@
             ringtone = new Audio(ringUrls[1]);
             ringtone.loop = true;
             ringtone.volume = ringVolume;
-            ringtone.play().catch(e2 => console.log("Ringtone blocked"));
+            ringtone.play().catch(e2 => console.log("Ringtone autoplay blocked"));
         });
         
         ringtoneInterval = setInterval(() => {
@@ -386,7 +404,7 @@
         }
         outgoingRingback.loop = true;
         outgoingRingback.volume = ringVol;
-        outgoingRingback.play().catch(e => console.log("Ringback play error"));
+        outgoingRingback.play().catch(e => console.log("Ringback error"));
         
         outgoingRingInterval = setInterval(() => {
             if (outgoingRingback && ringVol < 0.45) {
@@ -404,7 +422,7 @@
         ringVolume = 0.1;
     }
 
-    // Helper: toast message
+    // Helper Functions
     function showToast(msg, duration = 2500) {
         let old = document.querySelector('.toast-msg');
         if(old) old.remove();
@@ -415,7 +433,6 @@
         setTimeout(() => div.remove(), duration);
     }
 
-    // Update UI based on state
     function updateUI() {
         const container = document.getElementById('callManager');
         if (!container) return;
@@ -441,7 +458,7 @@
                 <div class="active-call-box">
                     <div class="badge" style="color:#2ecc71;">LIVE CALL ACTIVE</div>
                     <div style="font-size: 20px; margin: 16px 0;">Speaking now</div>
-                    <button id="hangupActiveBtn" class="hangup-btn" style="background:#e74c3c; width:100%; padding:14px; border-radius:60px; font-weight:bold;">HANG UP</button>
+                    <button id="hangupActiveBtn" style="background:#e74c3c; width:100%; padding:14px; border-radius:60px; font-weight:bold; margin-top:0;">HANG UP</button>
                 </div>
             `;
             document.getElementById('hangupActiveBtn')?.addEventListener('click', () => hangupCall(true));
@@ -548,7 +565,6 @@
             }
         }
         
-        // Start ringback tone for caller
         startOutgoingRingback();
         
         const targetPeerId = 'momin_' + remoteNumericId;
@@ -590,14 +606,4 @@
                 showToast("No answer, timeout", 1800);
                 hangupCall(false);
             }
-        }, 30000);
-    }
-
-    function initPeer() {
-        peer = new Peer(fullPeerId, {
-            debug: 2,
-            config: { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] }
-        });
-        
-        peer.on('open', (id) => {
-            document.getElementById('myIdDisplay').innerText = 
+  
