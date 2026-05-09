@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Momin Voice Call - Professional</title>
+    <title>Momin Voice Call - Fixed ID</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -53,11 +53,11 @@
             border: 1px solid #2e8b57;
         }
         .id-number {
-            font-size: 36px;
+            font-size: 42px;
             font-weight: 800;
             font-family: monospace;
             color: #2ecc71;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
         }
         .status {
             background: #0e1322;
@@ -210,8 +210,10 @@
             margin-top: 8px;
             text-align: center;
         }
-        .loading {
-            color: #f39c12;
+        .refresh-btn {
+            background: #2c3e50;
+            margin-top: 5px;
+            padding: 8px;
             font-size: 12px;
         }
     </style>
@@ -224,7 +226,8 @@
         <div class="id-box">
             <span class="id-number" id="myIdDisplay">----</span>
         </div>
-        <div class="status" id="connectionStatus">Connecting...</div>
+        <div class="status" id="connectionStatus">Initializing...</div>
+        <button id="refreshIdBtn" class="refresh-btn" style="background:#2c3e50; margin-top:8px; padding:6px; font-size:11px;">GENERATE NEW ID</button>
     </div>
 
     <!-- CALL A FRIEND Card -->
@@ -279,13 +282,29 @@
     let outgoingRingback = null;
     let outgoingRingInterval = null;
 
-    // ========== USER ID (Simple 4-5 digit number) ==========
+    // ========== USER ID - FIXED: Always shows a number ==========
     let myNumber = localStorage.getItem('momin_permanent_id');
     if (!myNumber) {
         myNumber = Math.floor(1000 + Math.random() * 9000).toString();
         localStorage.setItem('momin_permanent_id', myNumber);
     }
     const fullPeerId = 'momin_' + myNumber;
+
+    // Display ID instantly on page load
+    document.getElementById('myIdDisplay').innerText = myNumber;
+
+    // Refresh ID button
+    document.getElementById('refreshIdBtn')?.addEventListener('click', () => {
+        myNumber = Math.floor(1000 + Math.random() * 9000).toString();
+        localStorage.setItem('momin_permanent_id', myNumber);
+        document.getElementById('myIdDisplay').innerText = myNumber;
+        showToast("New ID generated: " + myNumber, 2000);
+        // Reconnect peer with new ID
+        if (peer) {
+            peer.destroy();
+        }
+        initPeer();
+    });
 
     // ========== CONTACTS MANAGEMENT ==========
     let contacts = [];
@@ -580,26 +599,4 @@
         
         try {
             const call = peer.call(targetPeerId, localStream);
-            currentCall = call;
-            
-            call.on('stream', (remoteStream) => {
-                stopAllSounds();
-                if (remoteAudio) {
-                    remoteAudio.pause();
-                    remoteAudio.srcObject = null;
-                }
-                const audioPlayer = new Audio();
-                audioPlayer.srcObject = remoteStream;
-                audioPlayer.autoplay = true;
-                remoteAudio = audioPlayer;
-                isInCall = true;
-                updateUI();
-                document.getElementById('connectionStatus').innerHTML = "Connected";
-                showToast("Call started!");
-            });
-            call.on('close', () => {
-                stopAllSounds();
-                hangupCall(false);
-                showToast("Call ended", 1300);
-            });
-    
+            currentCal
